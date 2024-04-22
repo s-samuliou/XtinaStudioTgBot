@@ -1,7 +1,10 @@
 package org.xtinastudio.com.service;
 
 import org.xtinastudio.com.entity.Appointment;
+import org.xtinastudio.com.entity.Master;
+import org.xtinastudio.com.entity.Services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AppointmentService {
@@ -10,9 +13,9 @@ public interface AppointmentService {
 
     Appointment editById(Long id, Appointment appointment);
 
-    Appointment findAppointmentByDate(Long id);
+    List<Appointment> AppointmentByServiceAndMasterAndAppointmentDate(Services service, Master master, String date);
 
     List<Appointment> getAll();
 
-    void delete(Long id);
+    void deleteById(Long id);
 }

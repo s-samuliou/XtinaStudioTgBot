@@ -10,7 +10,9 @@ public interface SalonInfoService {
 
     SalonInfo editById(Long id, SalonInfo salonInfo);
 
-    SalonInfo findSalonInfoById(Long id);
+    SalonInfo findById(Long id);
+
+    SalonInfo findByName(String name);
 
     List<SalonInfo> getAll();
 

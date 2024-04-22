@@ -6,4 +6,8 @@ import org.xtinastudio.com.entity.Master;
 
 @Repository
 public interface MasterJpaRepository extends JpaRepository<Master, Long> {
+
+    Master findByLogin(String login);
+
+    Master findByName(String name);
 }

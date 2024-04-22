@@ -1,10 +1,15 @@
 package org.xtinastudio.com.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.xtinastudio.com.enums.AppointmentStatus;
+import org.xtinastudio.com.enums.WorkTime;
 
 import java.time.LocalDateTime;
 
+@Data
+@NoArgsConstructor
 @Entity
 @Table(name = "appointments")
 public class Appointment {
@@ -14,10 +19,10 @@ public class Appointment {
     private Long id;
 
     @Column(name = "appointment_date", nullable = false)
-    private LocalDateTime appointmentDate;
+    private String appointmentDate;
 
     @Column(name = "appointment_time", nullable = false)
-    private LocalDateTime appointmentTime;
+    private WorkTime appointmentTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -33,5 +38,5 @@ public class Appointment {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "service_id", nullable = false)
-    private Service service;
+    private Services service;
 }

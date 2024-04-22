@@ -1,14 +1,17 @@
 package org.xtinastudio.com.entity;
 
 import jakarta.persistence.*;
-import org.xtinastudio.com.service.MasterService;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Data
+@NoArgsConstructor
 @Entity
 @Table(name = "services")
-public class Service {
+public class Services {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

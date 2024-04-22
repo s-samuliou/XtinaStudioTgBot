@@ -10,7 +10,11 @@ public interface MasterService {
 
     Master editById(Long id, Master master);
 
-    Master findMasterById(Long id);
+    Master findById(Long id);
+
+    Master findByLogin(String login);
+
+    Master findByName(String name);
 
     List<Master> getAll();
 

@@ -7,12 +7,281 @@
         http://www.liquibase.org/xml/ns/dbchangelog-ext
         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-        <include file="db/changelog/changelogs/client-changelock.xml"/>
-        <include file="db/changelog/changelogs/master-changelock.xml"/>
-        <include file="db/changelog/changelogs/"/>
-        <include file="db/changelog/changelogs/"/>
-        <include file="db/changelog/changelogs/"/>
-        <include file="db/changelog/changelogs/"/>
-        <include file="db/changelog/changelogs/"/>
+    <changeSet id="1" author="s_samuliou">
+        <comment>Create table appointments</comment>
+        <createTable tableName="appointments">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_appointments"/>
+            </column>
+            <column name="appointment_date" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="appointment_time" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="master_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="service_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 
+    <changeSet id="2" author="s_samuliou">
+        <comment>Create table clients</comment>
+        <createTable tableName="clients">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_clients"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone_number" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="chat_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="registration_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="3" author="s_samuliou">
+        <comment>Create table master_reviews</comment>
+        <createTable tableName="master_reviews">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_master_reviews"/>
+            </column>
+            <column name="master_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="review_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="4" author="s_samuliou">
+        <comment>Create table master_services</comment>
+        <createTable tableName="master_services">
+            <column name="master_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="service_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="5" author="s_samuliou">
+        <comment>Create table masters</comment>
+        <createTable tableName="masters">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_masters"/>
+            </column>
+            <column name="chat_id" type="VARCHAR(255)"/>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="login" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="LONGTEXT"/>
+            <column name="photo_url" type="VARCHAR(255)"/>
+            <column name="role" type="VARCHAR(255)"/>
+            <column name="work_status" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="6" author="s_samuliou">
+        <comment>Create table salon_info</comment>
+        <createTable tableName="salon_info">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_salon_info"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="latitude" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="longitude" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="7" author="s_samuliou">
+        <comment>Create table services</comment>
+        <createTable tableName="services">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_services"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="LONGTEXT"/>
+            <column name="duration" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="DECIMAL">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="8" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="client_id" baseTableName="appointments"
+                                 constraintName="FK_APPOINTMENTS_ON_CLIENT" referencedColumnNames="id"
+                                 referencedTableName="clients"/>
+    </changeSet>
+
+    <changeSet id="9" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="master_id" baseTableName="appointments"
+                                 constraintName="FK_APPOINTMENTS_ON_MASTER" referencedColumnNames="id"
+                                 referencedTableName="masters"/>
+    </changeSet>
+
+    <changeSet id="10" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="service_id" baseTableName="appointments"
+                                 constraintName="FK_APPOINTMENTS_ON_SERVICE" referencedColumnNames="id"
+                                 referencedTableName="services"/>
+    </changeSet>
+
+    <changeSet id="11" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="client_id" baseTableName="master_reviews"
+                                 constraintName="FK_MASTER_REVIEWS_ON_CLIENT" referencedColumnNames="id"
+                                 referencedTableName="clients"/>
+    </changeSet>
+
+    <changeSet id="12" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="master_id" baseTableName="master_reviews"
+                                 constraintName="FK_MASTER_REVIEWS_ON_MASTER" referencedColumnNames="id"
+                                 referencedTableName="masters"/>
+    </changeSet>
+
+    <changeSet id="13" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="master_id" baseTableName="master_services"
+                                 constraintName="fk_masser_on_master" referencedColumnNames="id"
+                                 referencedTableName="masters"/>
+    </changeSet>
+
+    <changeSet id="14" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="service_id" baseTableName="master_services"
+                                 constraintName="fk_masser_on_services" referencedColumnNames="id"
+                                 referencedTableName="services"/>
+    </changeSet>
+
+    <changeSet id="15" author="s_samuliou">
+        <insert tableName="salon_info">
+            <column name="name" value="Atrium"/>
+            <column name="latitude" value="53.90423515733663"/>
+            <column name="longitude" value="30.33916260453727"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="16" author="s_samuliou">
+        <insert tableName="clients">
+            <column name="name" value="Stepan"/>
+            <column name="phone_number" value="123456789"/>
+            <column name="chat_id" value=""/>
+            <column name="language" value="Russian"/>
+            <column name="registration_date" value="2024-04-22T12:00:00"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="17" author="s_samuliou">
+        <insert tableName="services">
+            <column name="name" value="Brows"/>
+            <column name="description" value="Brows Description"/>
+            <column name="duration" value="50"/>
+            <column name="price" value="250.00"/>
+        </insert>
+        <insert tableName="services">
+            <column name="name" value="Makeup"/>
+            <column name="description" value="Makeup Description"/>
+            <column name="duration" value="40"/>
+            <column name="price" value="290.00"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="18" author="s_samuliou">
+        <insert tableName="masters">
+            <column name="chat_id" value=""/>
+            <column name="name" value="Admin"/>
+            <column name="login" value="admin"/>
+            <column name="password" value="admin"/>
+            <column name="last_name" value="admin"/>
+            <column name="description" value="admin"/>
+            <column name="photo_url" value="none"/>
+            <column name="role" value="ROLE_ADMIN"/>
+            <column name="work_status" value="WORKING"/>
+        </insert>
+        <insert tableName="masters">
+            <column name="chat_id" value=""/>
+            <column name="name" value="Master"/>
+            <column name="login" value="master"/>
+            <column name="password" value="master"/>
+            <column name="last_name" value="Master Last Name"/>
+            <column name="description" value="Master Description"/>
+            <column name="photo_url" value="https://example.com/master_photo.jpg"/>
+            <column name="role" value="ROLE_MASTER"/>
+            <column name="work_status" value="WORKING"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="19" author="s_samuliou">
+        <insert tableName="master_services">
+            <column name="master_id" value="1"/>
+            <column name="service_id" value="1"/>
+        </insert>
+        <insert tableName="master_services">
+            <column name="master_id" value="1"/>
+            <column name="service_id" value="2"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="20" author="s_samuliou">
+        <insert tableName="appointments">
+            <column name="appointment_date" value="22.04"/>
+            <column name="appointment_time" value="10"/>
+            <column name="status" value="scheduled"/>
+            <column name="client_id" value="1"/>
+            <column name="master_id" value="1"/>
+            <column name="service_id" value="1"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="21" author="s_samuliou">
+        <insert tableName="master_reviews">
+            <column name="master_id" value="1"/>
+            <column name="client_id" value="1"/>
+            <column name="rating" value="5"/>
+            <column name="review_date" value="2024-04-22T12:00:00"/>
+        </insert>
+    </changeSet>
 </databaseChangeLog>

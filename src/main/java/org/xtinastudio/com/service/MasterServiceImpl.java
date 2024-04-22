@@ -3,6 +3,7 @@ package org.xtinastudio.com.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.xtinastudio.com.entity.Master;
+import org.xtinastudio.com.exceptions.MasterNotFoundException;
 import org.xtinastudio.com.repository.MasterJpaRepository;
 
 import java.util.List;
@@ -20,13 +21,37 @@ public class MasterServiceImpl implements MasterService {
 
     @Override
     public Master editById(Long id, Master master) {
-        return null;
+        Master existingMaster = repository.findById(id).orElseThrow(() -> new MasterNotFoundException("Master not found with id: " + id));
+
+        existingMaster.setName(master.getName());
+        existingMaster.setLastName(master.getLastName());
+        existingMaster.setDescription(master.getDescription());
+        existingMaster.setPhotoUrl(master.getPhotoUrl());
+        existingMaster.setRole(master.getRole());
+        existingMaster.setWorkStatus(master.getWorkStatus());
+        existingMaster.setLogin(master.getLogin());
+        existingMaster.setPassword(master.getPassword());
+
+        Master updatedMaster = repository.save(existingMaster);
+
+        return updatedMaster;
     }
 
     @Override
-    public Master findMasterById(Long id) {
-        return null;
+    public Master findById(Long id) {
+        return repository.findById(id).orElseThrow(() -> new MasterNotFoundException("Master not found with id: " + id));
     }
+
+    @Override
+    public Master findByLogin(String login) {
+        return repository.findByLogin(login);
+    }
+
+    @Override
+    public Master findByName(String name) {
+        return findByName(name);
+    }
+
 
     @Override
     public List<Master> getAll() {
@@ -37,6 +62,8 @@ public class MasterServiceImpl implements MasterService {
     public void delete(Long id) {
         if (repository.existsById(id)) {
             repository.deleteById(id);
+        } else {
+            throw new MasterNotFoundException("Master not found with id: " + id);
         }
     }
 }

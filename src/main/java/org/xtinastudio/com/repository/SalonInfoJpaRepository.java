@@ -6,4 +6,6 @@ import org.xtinastudio.com.entity.SalonInfo;
 
 @Repository
 public interface SalonInfoJpaRepository extends JpaRepository<SalonInfo, Long> {
+
+    SalonInfo findByName(String name);
 }

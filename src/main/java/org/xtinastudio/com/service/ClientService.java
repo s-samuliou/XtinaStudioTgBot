@@ -10,7 +10,9 @@ public interface ClientService {
 
     Client editById(Long id, Client client);
 
-    Client findByPhoneNumber(Long id);
+    Client findById(Long id);
+
+    Client findByPhoneNumber(String phoneNumber);
 
     List<Client> getAll();
 

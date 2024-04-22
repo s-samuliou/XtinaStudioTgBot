@@ -1,34 +1,34 @@
 package org.xtinastudio.com.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.xtinastudio.com.entity.Service;
-import org.xtinastudio.com.repository.ServicesJpaRepository;
+import org.xtinastudio.com.entity.Services;
+import org.xtinastudio.com.repository.ServiceJpaRepository;
 
 import java.util.List;
 
 @org.springframework.stereotype.Service
-public class ServicesServiceImpl implements ServicesService {
+public class ServiceServiceImpl implements ServiceService {
 
     @Autowired
-    ServicesJpaRepository repository;
+    ServiceJpaRepository repository;
 
     @Override
-    public Service create(Service service) {
+    public Services create(Services service) {
         return repository.save(service);
     }
 
     @Override
-    public Service editById(Long id, Service service) {
+    public Services editById(Long id, Services service) {
         return null;
     }
 
     @Override
-    public Service findById(Long id) {
+    public Services findById(Long id) {
         return repository.findById(id).orElseThrow();
     }
 
     @Override
-    public List<Service> getAll() {
+    public List<Services> getAll() {
         return repository.findAll();
     }
 

@@ -6,4 +6,6 @@ import org.xtinastudio.com.entity.Client;
 
 @Repository
 public interface ClientJpaRepository extends JpaRepository<Client, Long> {
+
+    Client findClientByPhoneNumber(String phoneNumber);
 }

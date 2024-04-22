@@ -1,13 +1,15 @@
 package org.xtinastudio.com.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.xtinastudio.com.enums.Role;
 import org.xtinastudio.com.enums.WorkStatus;
 
 import java.util.List;
-import java.util.Set;
 
+@Data
+@NoArgsConstructor
 @Entity
 @Table(name = "masters")
 public class Master {
@@ -47,9 +49,8 @@ public class Master {
     private List<Appointment> appointments;
 
     @ManyToMany(mappedBy = "masters")
-    private List<Service> services;
+    private List<Services> services;
 
     @OneToMany(mappedBy = "master")
     private List<MasterReview> masterReviews;
-
 }
