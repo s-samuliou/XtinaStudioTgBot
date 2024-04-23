@@ -8,4 +8,8 @@ import org.xtinastudio.com.entity.Client;
 public interface ClientJpaRepository extends JpaRepository<Client, Long> {
 
     Client findClientByPhoneNumber(String phoneNumber);
+
+    Boolean existsByChatId(Long chatId);
+
+    Client findClientByChatId(Long chatId);
 }

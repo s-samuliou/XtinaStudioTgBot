@@ -8,6 +8,7 @@ import org.xtinastudio.com.entity.Services;
 import org.xtinastudio.com.exceptions.AppointmentNotFoundException;
 import org.xtinastudio.com.repository.AppointmentJpaRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,8 +40,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<Appointment> AppointmentByServiceAndMasterAndAppointmentDate(Services service, Master master, String date) {
+    public List<Appointment> AppointmentByServiceAndMasterAndAppointmentDate(Services service, Master master, LocalDate date) {
         return repository.getAppointmentByServiceAndMasterAndAppointmentDate(service, master, date);
+    }
+
+    @Override
+    public List<Appointment> getAppointmentsByDateAndServiceAndMaster(LocalDate date, Services service, Master master) {
+        return repository.getAppointmentsByDateAndServiceAndMaster(date, service, master);
     }
 
     @Override

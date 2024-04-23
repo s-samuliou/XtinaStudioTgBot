@@ -21,11 +21,11 @@ public class Client {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "phone_number", nullable = false)
+    @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "chat_id", nullable = false)
-    private String chatId;
+    @Column(name = "chat_id")
+    private Long chatId;
 
     @Column(name = "language", nullable = false)
     private Language language;

@@ -44,6 +44,17 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    public Boolean existsByChatId(Long chatId) {
+        return repository.existsByChatId(chatId);
+    }
+
+    @Override
+    public Client findClientByChatId(Long chatId) {
+        return repository.findClientByChatId(chatId);
+    }
+
+
+    @Override
     public List<Client> getAll() {
         return repository.findAll();
     }

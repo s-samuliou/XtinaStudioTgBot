@@ -3,6 +3,7 @@ package org.xtinastudio.com.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.xtinastudio.com.entity.Master;
+import org.xtinastudio.com.entity.Services;
 import org.xtinastudio.com.exceptions.MasterNotFoundException;
 import org.xtinastudio.com.repository.MasterJpaRepository;
 
@@ -50,6 +51,11 @@ public class MasterServiceImpl implements MasterService {
     @Override
     public Master findByName(String name) {
         return findByName(name);
+    }
+
+    @Override
+    public List<Master> findByServicesContaining(Services services) {
+        return repository.findByServicesContaining(services);
     }
 
 

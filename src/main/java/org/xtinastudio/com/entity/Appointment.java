@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.xtinastudio.com.enums.AppointmentStatus;
 import org.xtinastudio.com.enums.WorkTime;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,7 +20,7 @@ public class Appointment {
     private Long id;
 
     @Column(name = "appointment_date", nullable = false)
-    private String appointmentDate;
+    private LocalDate appointmentDate;
 
     @Column(name = "appointment_time", nullable = false)
     private WorkTime appointmentTime;

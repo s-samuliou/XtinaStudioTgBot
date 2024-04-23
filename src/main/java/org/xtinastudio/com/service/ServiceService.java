@@ -12,6 +12,8 @@ public interface ServiceService {
 
     Services findById(Long id);
 
+    Services findByName(String name);
+
     List<Services> getAll();
 
     void delete(Long id);

@@ -28,6 +28,11 @@ public class ServiceServiceImpl implements ServiceService {
     }
 
     @Override
+    public Services findByName(String name) {
+        return repository.findByName(name);
+    }
+
+    @Override
     public List<Services> getAll() {
         return repository.findAll();
     }

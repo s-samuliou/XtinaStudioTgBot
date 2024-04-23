@@ -18,8 +18,8 @@ public class Master {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "chat_id")
-    private String chatId;
+    @Column(name = "chat_id", nullable = true)
+    private Long chatId;
 
     @Column(name = "name", nullable = false)
     private String name;

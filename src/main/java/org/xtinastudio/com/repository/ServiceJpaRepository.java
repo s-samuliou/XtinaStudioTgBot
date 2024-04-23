@@ -6,4 +6,6 @@ import org.xtinastudio.com.entity.Services;
 
 @Repository
 public interface ServiceJpaRepository extends JpaRepository<Services, Long> {
+
+    Services findByName(String name);
 }

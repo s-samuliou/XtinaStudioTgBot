@@ -14,6 +14,10 @@ public interface ClientService {
 
     Client findByPhoneNumber(String phoneNumber);
 
+    Boolean existsByChatId(Long chatId);
+
+    Client findClientByChatId(Long chatId);
+
     List<Client> getAll();
 
     void delete(Long id);
