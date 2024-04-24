@@ -2,6 +2,7 @@ package org.xtinastudio.com.service;
 
 import org.springframework.data.repository.query.Param;
 import org.xtinastudio.com.entity.Appointment;
+import org.xtinastudio.com.entity.Client;
 import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.entity.Services;
 
@@ -16,6 +17,8 @@ public interface AppointmentService {
     Appointment editById(Long id, Appointment appointment);
 
     List<Appointment> getAppointmentsByDateAndServiceAndMaster(LocalDate date, Master master);
+
+    List<Appointment> getAppointmentsByClient(Client client);
 
     List<Appointment> getAll();
 

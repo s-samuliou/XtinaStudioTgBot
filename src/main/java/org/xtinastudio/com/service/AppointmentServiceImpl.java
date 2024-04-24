@@ -3,6 +3,7 @@ package org.xtinastudio.com.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.xtinastudio.com.entity.Appointment;
+import org.xtinastudio.com.entity.Client;
 import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.entity.Services;
 import org.xtinastudio.com.exceptions.AppointmentNotFoundException;
@@ -42,6 +43,11 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     public List<Appointment> getAppointmentsByDateAndServiceAndMaster(LocalDate date, Master master) {
         return repository.getAppointmentsByDateAndServiceAndMaster(date, master);
+    }
+
+    @Override
+    public List<Appointment> getAppointmentsByClient(Client client) {
+        return repository.getAppointmentsByClient(client);
     }
 
     @Override

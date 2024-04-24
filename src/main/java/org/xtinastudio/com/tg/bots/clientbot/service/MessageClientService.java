@@ -135,10 +135,12 @@ public class MessageClientService {
                     appointment.setAppointmentTime(state.getWorkTime());
                     appointment.setClient(clientService.findByChatId(chatId));
                     appointment.setStatus(AppointmentStatus.BANNED);
-
                     appointmentService.create(appointment);
                     state = new BookingState();
                     sendMessage = menu(chatId);
+                    return sendMessage;
+                case "myServices":
+                    sendMessage = myServices(chatId);
                     return sendMessage;
                 default:
                     // Обработка непредвиденных нажатий
@@ -146,6 +148,46 @@ public class MessageClientService {
             }
         }
         return null;
+    }
+
+    public SendMessage myServices(Long chatId) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        Client client = clientService.findByChatId(chatId);
+        List<Appointment> appointmentsByClient = appointmentService.getAppointmentsByClient(client);
+
+        StringBuilder messageText = new StringBuilder("Ваши забронированные услуги:\n");
+        for (Appointment appointment : appointmentsByClient) {
+            if (appointment.getStatus() == AppointmentStatus.BANNED) {
+                messageText
+                        .append("- ")
+                        .append(appointment.getService().getName())
+                        .append("\n")
+                        .append(appointment.getMaster().getName())
+                        .append("\n")
+                        .append(appointment.getAppointmentDate())
+                        .append("\n")
+                        .append(appointment.getAppointmentTime())
+                        .append("\n\n");
+            }
+        }
+
+        sendMessage.setText(messageText.toString());
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        InlineKeyboardButton backButton = new InlineKeyboardButton();
+        backButton.setText("Back to Menu");
+        backButton.setCallbackData("menu");
+        List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
+        backButtonRow.add(backButton);
+        keyboard.add(backButtonRow);
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        return sendMessage;
     }
 
     public WorkTime parseWorkTime(String time) {
@@ -396,6 +438,13 @@ public class MessageClientService {
         button2.setCallbackData("cancelService");
         row2.add(button2);
         keyboard.add(row2);
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText("Мои записи");
+        button.setCallbackData("myServices");
+        row.add(button);
+        keyboard.add(row);
 
         List<InlineKeyboardButton> row3 = new ArrayList<>();
         InlineKeyboardButton button3 = new InlineKeyboardButton();

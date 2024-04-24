@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.xtinastudio.com.entity.Appointment;
+import org.xtinastudio.com.entity.Client;
 import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.entity.Services;
 
@@ -20,4 +21,7 @@ public interface AppointmentJpaRepository extends JpaRepository<Appointment, Lon
             "AND a.master = :master")
     List<Appointment> getAppointmentsByDateAndServiceAndMaster(@Param("date") LocalDate date,
                                                                @Param("master") Master master);
+
+    @Query("SELECT a FROM Appointment a WHERE a.client = :client")
+    List<Appointment> getAppointmentsByClient(@Param("client") Client client);
 }

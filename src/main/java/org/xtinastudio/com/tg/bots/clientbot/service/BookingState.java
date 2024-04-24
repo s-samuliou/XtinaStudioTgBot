@@ -21,8 +21,6 @@ public class BookingState {
 
     WorkTime workTime;
 
-    Client client;
-
     boolean checkService() {
         if (this.service == null) {
             return false;
