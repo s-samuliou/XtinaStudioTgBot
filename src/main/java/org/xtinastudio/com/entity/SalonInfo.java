@@ -14,12 +14,12 @@ public class SalonInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name")
     private String name;
 
-    @Column(name = "latitude", nullable = false)
+    @Column(name = "latitude")
     private double latitude;
 
-    @Column(name = "longitude", nullable = false)
+    @Column(name = "longitude")
     private double longitude;
 }

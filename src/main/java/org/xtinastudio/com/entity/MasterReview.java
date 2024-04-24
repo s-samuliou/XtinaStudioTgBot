@@ -17,17 +17,17 @@ public class MasterReview {
     private Long id;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "master_id", nullable = false)
+    @JoinColumn(name = "master_id")
     private Master master;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "client_id", nullable = false)
+    @JoinColumn(name = "client_id")
     private Client client;
 
-    @Column(name = "rating", nullable = false)
+    @Column(name = "rating")
     private int rating;
 
-    @Column(name = "review_date", nullable = false)
+    @Column(name = "review_date")
     private LocalDateTime reviewDate;
 
 

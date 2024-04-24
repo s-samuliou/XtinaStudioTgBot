@@ -1,6 +1,7 @@
 package org.xtinastudio.com.tg.bots.clientbot.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -122,8 +123,7 @@ public class MessageClientService {
                     return sendMessage;
                 case "time":
                     String time = getDataCallbackQuery(data, 1);
-                    String formattedTime = time + ":00";
-                    WorkTime workTime = parseWorkTime(formattedTime);
+                    WorkTime workTime = parseWorkTime(time);
                     state.setWorkTime(workTime);
                     sendMessage = approveBookingService(chatId, state);
                     return sendMessage;
@@ -132,9 +132,8 @@ public class MessageClientService {
                     appointment.setService(state.getService());
                     appointment.setMaster(state.getMaster());
                     appointment.setAppointmentDate(state.getDate());
-                    appointment.setAppointmentTime(state.workTime);
-                    Client byChatId = clientService.findClientByChatId(chatId);
-                    appointment.setClient(byChatId);
+                    appointment.setAppointmentTime(state.getWorkTime());
+                    appointment.setClient(clientService.findByChatId(chatId));
                     appointment.setStatus(AppointmentStatus.BANNED);
 
                     appointmentService.create(appointment);
@@ -219,7 +218,7 @@ public class MessageClientService {
             for (Services service : allServices) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(service.getName());
-                button.setCallbackData("service:" + service.getName());
+                button.setCallbackData("service_" + service.getName());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 row.add(button);
@@ -250,7 +249,7 @@ public class MessageClientService {
             for (Master master : allMasters) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(master.getName());
-                button.setCallbackData("master:" + master.getId());
+                button.setCallbackData("master_" + master.getId());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 row.add(button);
@@ -285,7 +284,7 @@ public class MessageClientService {
                     LocalDate date = allDates.get(j);
                     InlineKeyboardButton button = new InlineKeyboardButton();
                     button.setText(date.toString());
-                    button.setCallbackData("date:" + date.toString());
+                    button.setCallbackData("date_" + date.toString());
                     row.add(button);
                 }
                 keyboard.add(row);
@@ -308,21 +307,23 @@ public class MessageClientService {
             sendMessage.setText("Выберите время:");
 
             List<Appointment> appointments = appointmentService.getAppointmentsByDateAndServiceAndMaster(
-                    state.getDate(), state.getService(), state.getMaster());
+                    state.getDate(), state.getMaster());
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             int buttonsInRow = 3;
-            List<InlineKeyboardButton> row = new ArrayList<>(); // Создаем список для кнопок в текущей строке
+            List<InlineKeyboardButton> row = new ArrayList<>();
             for (WorkTime workTime : WorkTime.values()) {
+                int workTimeValue = workTime.ordinal();
+
                 boolean isTimeOccupied = appointments.stream()
-                        .anyMatch(appointment -> appointment.getAppointmentTime().getDescription().equals(workTime.getDescription()));
+                        .anyMatch(appointment -> appointment.getAppointmentTime().ordinal() == workTimeValue);
 
                 if (!isTimeOccupied) {
                     InlineKeyboardButton button = new InlineKeyboardButton();
                     button.setText(workTime.getDescription());
-                    button.setCallbackData("time:" + workTime.getDescription());
+                    button.setCallbackData("time_" + workTime.getDescription());
 
                     row.add(button);
 
@@ -333,6 +334,7 @@ public class MessageClientService {
                 }
             }
 
+            // Если есть оставшиеся кнопки в последней строке, добавьте их
             if (!row.isEmpty()) {
                 keyboard.add(row);
             }
@@ -435,7 +437,7 @@ public class MessageClientService {
         for (SalonInfo salon : allSalons) {
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(salon.getName());
-            button.setCallbackData("getToSalon:" + salon.getName());
+            button.setCallbackData("getToSalon_" + salon.getName());
 
             List<InlineKeyboardButton> row = new ArrayList<>();
             row.add(button);
@@ -471,7 +473,7 @@ public class MessageClientService {
     }
 
     private static String getDataCallbackQuery(String data, int x) {
-        String[] parts = data.split(":");
+        String[] parts = data.split("_");
         String address = parts[x];
         return address;
     }
@@ -506,6 +508,7 @@ public class MessageClientService {
             }
 
             clientService.create(client);
+            Hibernate.initialize(client);
             sendMessage.setText(String.format("Welcome %s! You are automatically registered and can work with the bot!", update.getMessage().getChat().getFirstName()));
             sendMessage.setChatId(update.getMessage().getChatId());
         } else {

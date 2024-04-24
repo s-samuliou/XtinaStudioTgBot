@@ -15,13 +15,9 @@ import java.util.List;
 @Repository
 public interface AppointmentJpaRepository extends JpaRepository<Appointment, Long> {
 
-    List<Appointment> getAppointmentByServiceAndMasterAndAppointmentDate(Services service, Master master, LocalDate appointmentDate);
-
     @Query("SELECT a FROM Appointment a " +
             "WHERE a.appointmentDate = :date " +
-            "AND a.service = :service " +
             "AND a.master = :master")
     List<Appointment> getAppointmentsByDateAndServiceAndMaster(@Param("date") LocalDate date,
-                                                               @Param("service") Services service,
                                                                @Param("master") Master master);
 }

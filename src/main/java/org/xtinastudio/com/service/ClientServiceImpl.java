@@ -8,6 +8,7 @@ import org.xtinastudio.com.exceptions.MasterNotFoundException;
 import org.xtinastudio.com.repository.ClientJpaRepository;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ClientServiceImpl implements ClientService {
@@ -49,10 +50,18 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Client findClientByChatId(Long chatId) {
-        return repository.findClientByChatId(chatId);
+    public Client findByChatId(Long chatId) {
+        return repository.findByChatId(chatId);
     }
 
+    /*@Override
+    public Client getByChatId(Long chatId) {
+        List<Client> clients = repository.findAll();
+        return clients.stream()
+                .filter(client -> Objects.equals(client.getChatId(), chatId))
+                .findFirst()
+                .orElse(null);
+    }*/
 
     @Override
     public List<Client> getAll() {

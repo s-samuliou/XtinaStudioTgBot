@@ -16,7 +16,7 @@ public interface ClientService {
 
     Boolean existsByChatId(Long chatId);
 
-    Client findClientByChatId(Long chatId);
+    Client findByChatId(Long chatId);
 
     List<Client> getAll();
 

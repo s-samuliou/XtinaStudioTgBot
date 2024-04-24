@@ -19,25 +19,25 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "appointment_date", nullable = false)
+    @Column(name = "appointment_date")
     private LocalDate appointmentDate;
 
-    @Column(name = "appointment_time", nullable = false)
+    @Column(name = "appointment_time")
     private WorkTime appointmentTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status")
     private AppointmentStatus status;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "client_id", nullable = false)
+    @JoinColumn(name = "client_id")
     private Client client;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "master_id", nullable = false)
+    @JoinColumn(name = "master_id")
     private Master master;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "service_id", nullable = false)
+    @JoinColumn(name = "service_id")
     private Services service;
 }

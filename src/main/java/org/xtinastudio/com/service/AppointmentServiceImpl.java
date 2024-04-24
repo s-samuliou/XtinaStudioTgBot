@@ -40,13 +40,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<Appointment> AppointmentByServiceAndMasterAndAppointmentDate(Services service, Master master, LocalDate date) {
-        return repository.getAppointmentByServiceAndMasterAndAppointmentDate(service, master, date);
-    }
-
-    @Override
-    public List<Appointment> getAppointmentsByDateAndServiceAndMaster(LocalDate date, Services service, Master master) {
-        return repository.getAppointmentsByDateAndServiceAndMaster(date, service, master);
+    public List<Appointment> getAppointmentsByDateAndServiceAndMaster(LocalDate date, Master master) {
+        return repository.getAppointmentsByDateAndServiceAndMaster(date, master);
     }
 
     @Override

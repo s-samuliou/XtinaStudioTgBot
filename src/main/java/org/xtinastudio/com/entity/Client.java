@@ -18,7 +18,7 @@ public class Client {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name")
     private String name;
 
     @Column(name = "phone_number")
@@ -27,10 +27,10 @@ public class Client {
     @Column(name = "chat_id")
     private Long chatId;
 
-    @Column(name = "language", nullable = false)
+    @Column(name = "language")
     private Language language;
 
-    @Column(name = "registration_date", nullable = false)
+    @Column(name = "registration_date")
     private LocalDate registrationDate = LocalDate.now();
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)

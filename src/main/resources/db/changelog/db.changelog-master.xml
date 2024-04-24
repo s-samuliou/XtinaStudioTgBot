@@ -13,24 +13,12 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_appointments"/>
             </column>
-            <column name="appointment_date" type="DATE">
-                <constraints nullable="false"/>
-            </column>
-            <column name="appointment_time" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="status" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="client_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="master_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="service_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
+            <column name="appointment_date" type="DATE"/>
+            <column name="appointment_time" type="BIGINT"/>
+            <column name="status" type="VARCHAR(255)"/>
+            <column name="client_id" type="BIGINT"/>
+            <column name="master_id" type="BIGINT"/>
+            <column name="service_id" type="BIGINT"/>
         </createTable>
     </changeSet>
 
@@ -40,19 +28,11 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_clients"/>
             </column>
-            <column name="name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="name" type="VARCHAR(255)"/>
             <column name="phone_number" type="VARCHAR(255)"/>
-            <column name="chat_id" type="BIGINT">
-                <constraints nullable="true"/>
-            </column>
-            <column name="language" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="registration_date" type="DATE">
-                <constraints nullable="false"/>
-            </column>
+            <column name="chat_id" type="BIGINT"/>
+            <column name="language" type="BIGINT"/>
+            <column name="registration_date" type="DATE"/>
         </createTable>
     </changeSet>
 
@@ -62,30 +42,18 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_master_reviews"/>
             </column>
-            <column name="master_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="client_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="rating" type="INT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="review_date" type="DATETIME">
-                <constraints nullable="false"/>
-            </column>
+            <column name="master_id" type="BIGINT"/>
+            <column name="client_id" type="BIGINT"/>
+            <column name="rating" type="INT"/>
+            <column name="review_date" type="DATETIME"/>
         </createTable>
     </changeSet>
 
     <changeSet id="4" author="s_samuliou">
         <comment>Create table master_services</comment>
         <createTable tableName="master_services">
-            <column name="master_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="service_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
+            <column name="master_id" type="BIGINT"/>
+            <column name="service_id" type="BIGINT"/>
         </createTable>
     </changeSet>
 
@@ -95,21 +63,11 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_masters"/>
             </column>
-            <column name="chat_id" type="BIGINT">
-                <constraints nullable="true"/>
-            </column>
-            <column name="name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="login" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="password" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="last_name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="chat_id" type="BIGINT"/>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="login" type="VARCHAR(255)"/>
+            <column name="password" type="VARCHAR(255)"/>
+            <column name="last_name" type="VARCHAR(255)"/>
             <column name="description" type="LONGTEXT"/>
             <column name="photo_url" type="VARCHAR(255)"/>
             <column name="role" type="VARCHAR(255)"/>
@@ -123,15 +81,9 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_salon_info"/>
             </column>
-            <column name="name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="latitude" type="DOUBLE">
-                <constraints nullable="false"/>
-            </column>
-            <column name="longitude" type="DOUBLE">
-                <constraints nullable="false"/>
-            </column>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="latitude" type="DOUBLE"/>
+            <column name="longitude" type="DOUBLE"/>
         </createTable>
     </changeSet>
 
@@ -141,16 +93,10 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_services"/>
             </column>
-            <column name="name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="name" type="VARCHAR(255)"/>
             <column name="description" type="LONGTEXT"/>
-            <column name="duration" type="INT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="price" type="DECIMAL">
-                <constraints nullable="false"/>
-            </column>
+            <column name="duration" type="INT"/>
+            <column name="price" type="DECIMAL"/>
         </createTable>
     </changeSet>
 
@@ -209,7 +155,7 @@
             <column name="name" value="Messi"/>
             <column name="phone_number" value="123456789"/>
             <column name="chat_id" value="1"/>
-            <column name="language" value="Russian"/>
+            <column name="language" value="1"/>
             <column name="registration_date" value="2024-04-22T12:00:00"/>
         </insert>
     </changeSet>
@@ -258,6 +204,10 @@
         <insert tableName="master_services">
             <column name="master_id" value="1"/>
             <column name="service_id" value="1"/>
+        </insert>
+        <insert tableName="master_services">
+            <column name="master_id" value="1"/>
+            <column name="service_id" value="2"/>
         </insert>
         <insert tableName="master_services">
             <column name="master_id" value="2"/>

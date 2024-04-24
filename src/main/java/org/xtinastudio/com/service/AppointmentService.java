@@ -15,9 +15,7 @@ public interface AppointmentService {
 
     Appointment editById(Long id, Appointment appointment);
 
-    List<Appointment> AppointmentByServiceAndMasterAndAppointmentDate(Services service, Master master, LocalDate date);
-
-    List<Appointment> getAppointmentsByDateAndServiceAndMaster(LocalDate date, Services service, Master master);
+    List<Appointment> getAppointmentsByDateAndServiceAndMaster(LocalDate date, Master master);
 
     List<Appointment> getAll();
 

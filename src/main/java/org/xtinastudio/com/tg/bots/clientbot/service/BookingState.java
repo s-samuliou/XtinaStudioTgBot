@@ -2,6 +2,7 @@ package org.xtinastudio.com.tg.bots.clientbot.service;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.xtinastudio.com.entity.Client;
 import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.entity.Services;
 import org.xtinastudio.com.enums.WorkTime;
@@ -19,6 +20,8 @@ public class BookingState {
     LocalDate date;
 
     WorkTime workTime;
+
+    Client client;
 
     boolean checkService() {
         if (this.service == null) {
