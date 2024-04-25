@@ -20,6 +20,8 @@ public interface AppointmentService {
 
     List<Appointment> getAppointmentsByClient(Client client);
 
+    Appointment getById(Long id);
+
     List<Appointment> getAll();
 
     void deleteById(Long id);

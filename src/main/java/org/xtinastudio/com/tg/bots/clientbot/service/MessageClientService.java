@@ -18,6 +18,8 @@ import org.xtinastudio.com.service.*;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -142,6 +144,15 @@ public class MessageClientService {
                 case "myServices":
                     sendMessage = myServices(chatId);
                     return sendMessage;
+                case "cancel":
+                    String idFormMessage = getDataCallbackQuery(data, 1);
+                    System.out.println(idFormMessage);
+                    Long id = Long.parseLong(idFormMessage);
+                    Appointment appointmentById = appointmentService.getById(id);
+                    appointmentById.setStatus(AppointmentStatus.CANCELED);
+                    appointmentService.editById(id, appointmentById);
+                    sendMessage = menu(chatId);
+                    return sendMessage;
                 default:
                     // Обработка непредвиденных нажатий
                     break;
@@ -160,14 +171,15 @@ public class MessageClientService {
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 messageText
-                        .append("- ")
-                        .append(appointment.getService().getName())
+                        .append("Услуга: " + appointment.getService().getName())
                         .append("\n")
-                        .append(appointment.getMaster().getName())
+                        .append("Мастер: " + appointment.getMaster().getName())
                         .append("\n")
-                        .append(appointment.getAppointmentDate())
+                        .append("Дата: " + appointment.getAppointmentDate())
                         .append("\n")
-                        .append(appointment.getAppointmentTime())
+                        .append("Время: " + appointment.getAppointmentTime().getDescription())
+                        .append("\n")
+                        .append("Цена: " + appointment.getService().getPrice())
                         .append("\n\n");
             }
         }
@@ -351,6 +363,10 @@ public class MessageClientService {
             List<Appointment> appointments = appointmentService.getAppointmentsByDateAndServiceAndMaster(
                     state.getDate(), state.getMaster());
 
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            int currentHour = currentDateTime.getHour();
+            int currentMinute = currentDateTime.getMinute();
+
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
@@ -359,19 +375,22 @@ public class MessageClientService {
             for (WorkTime workTime : WorkTime.values()) {
                 int workTimeValue = workTime.ordinal();
 
-                boolean isTimeOccupied = appointments.stream()
-                        .anyMatch(appointment -> appointment.getAppointmentTime().ordinal() == workTimeValue);
+                if (!(state.getDate().isEqual(LocalDate.now()) && workTimeValue <= currentHour - 9) && isTimeInPast(workTime, currentHour, currentMinute)) {
+                    boolean isTimeOccupied = appointments.stream()
+                            .anyMatch(appointment -> appointment.getAppointmentTime().ordinal() == workTimeValue
+                                    && appointment.getStatus() != AppointmentStatus.CANCELED);
 
-                if (!isTimeOccupied) {
-                    InlineKeyboardButton button = new InlineKeyboardButton();
-                    button.setText(workTime.getDescription());
-                    button.setCallbackData("time_" + workTime.getDescription());
+                    if (!isTimeOccupied) {
+                        InlineKeyboardButton button = new InlineKeyboardButton();
+                        button.setText(workTime.getDescription());
+                        button.setCallbackData("time_" + workTime.getDescription());
 
-                    row.add(button);
+                        row.add(button);
 
-                    if (row.size() == buttonsInRow) {
-                        keyboard.add(row);
-                        row = new ArrayList<>();
+                        if (row.size() == buttonsInRow) {
+                            keyboard.add(row);
+                            row = new ArrayList<>();
+                        }
                     }
                 }
             }
@@ -397,10 +416,21 @@ public class MessageClientService {
         return null;
     }
 
+    private boolean isTimeInPast(WorkTime workTime, int currentHour, int currentMinute) {
+        // Получаем час и минуты начала выбранного времени
+        int timeHour = workTime.ordinal() / 2 + 10; // Предполагается, что интервалы начинаются с 10:00
+        int timeMinute = workTime.ordinal() % 2 == 0 ? 0 : 30;
+
+        // Проверяем, если текущее время позже чем начало выбранного времени на 15 минут
+        return (currentHour > timeHour || (currentHour == timeHour && currentMinute >= timeMinute + 15));
+    }
+
     public List<LocalDate> getAvailableDates() {
         List<LocalDate> availableDates = new ArrayList<>();
         LocalDate currentDate = LocalDate.now();
         int daysToAdd = 1;
+
+        availableDates.add(currentDate);
 
         while (availableDates.size() < 6) {
             LocalDate nextDate = currentDate.plusDays(daysToAdd);
@@ -414,7 +444,55 @@ public class MessageClientService {
     }
 
     public SendMessage cancelService(Long chatId) {
-        return null;
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        int counter = 1;
+
+        Client client = clientService.findByChatId(chatId);
+        List<Appointment> appointmentsByClient = appointmentService.getAppointmentsByClient(client);
+
+        StringBuilder messageText = new StringBuilder("Ваши забронированные услуги:\n");
+        for (Appointment appointment : appointmentsByClient) {
+            if (appointment.getStatus() == AppointmentStatus.BANNED) {
+                messageText
+                        .append("Номер: ").append(counter++).append("\n")
+                        .append("Услуга: " + appointment.getService().getName()).append("\n")
+                        .append("Мастер: " + appointment.getMaster().getName()).append("\n")
+                        .append("Дата: " + appointment.getAppointmentDate()).append("\n")
+                        .append("Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
+                        .append("Цена: " + appointment.getService().getPrice()).append("\n\n");
+            }
+        }
+
+        sendMessage.setText(messageText.toString());
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        counter = 1;
+
+        for (Appointment appointment : appointmentsByClient) {
+            if (appointment.getStatus() == AppointmentStatus.BANNED) {
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                button.setText("Отменить " + counter);
+                button.setCallbackData("cancel_" + appointment.getId());
+                List<InlineKeyboardButton> row = new ArrayList<>();
+                row.add(button);
+                keyboard.add(row);
+                counter++;
+            }
+        }
+
+        InlineKeyboardButton backButton = new InlineKeyboardButton();
+        backButton.setText("Back to Menu");
+        backButton.setCallbackData("menu");
+        List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
+        backButtonRow.add(backButton);
+        keyboard.add(backButtonRow);
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        return sendMessage;
     }
 
     public SendMessage menu(Long chatId) {
@@ -557,7 +635,6 @@ public class MessageClientService {
             }
 
             clientService.create(client);
-            Hibernate.initialize(client);
             sendMessage.setText(String.format("Welcome %s! You are automatically registered and can work with the bot!", update.getMessage().getChat().getFirstName()));
             sendMessage.setChatId(update.getMessage().getChatId());
         } else {
