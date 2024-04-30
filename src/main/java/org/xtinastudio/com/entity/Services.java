@@ -37,4 +37,10 @@ public class Services {
 
     @OneToMany(mappedBy = "service")
     private List<Appointment> appointments;
+
+    @ManyToMany
+    @JoinTable(name = "salon_services",
+            joinColumns = @JoinColumn(name = "service_id"),
+            inverseJoinColumns = @JoinColumn(name = "salon_id"))
+    private List<Salon> salons;
 }

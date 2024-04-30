@@ -1,7 +1,6 @@
 package org.xtinastudio.com.tg.bots.clientbot.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -19,8 +18,6 @@ import org.xtinastudio.com.service.*;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +29,7 @@ public class MessageClientService {
     private ClientService clientService;
 
     @Autowired
-    private SalonInfoService salonInfo;
+    private SalonService salonInfo;
 
     @Autowired
     private ServiceService serviceService;
@@ -556,15 +553,15 @@ public class MessageClientService {
         message.setChatId(chatId);
         message.setText("Select salon location:");
 
-        List<SalonInfo> allSalons = salonInfo.getAll();
+        List<Salon> allSalons = salonInfo.getAll();
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        for (SalonInfo salon : allSalons) {
+        for (Salon salon : allSalons) {
             InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(salon.getName());
-            button.setCallbackData("getToSalon_" + salon.getName());
+            button.setText(salon.getAddress());
+            button.setCallbackData("getToSalon_" + salon.getAddress());
 
             List<InlineKeyboardButton> row = new ArrayList<>();
             row.add(button);
@@ -588,7 +585,7 @@ public class MessageClientService {
     public SendLocation sendSalonLocation(Long chatId, String address) {
         SendLocation sendLocation = new SendLocation();
 
-        SalonInfo salon = salonInfo.findByName(address);
+        Salon salon = salonInfo.findByName(address);
 
         if (salon != null) {
             sendLocation.setChatId(chatId);

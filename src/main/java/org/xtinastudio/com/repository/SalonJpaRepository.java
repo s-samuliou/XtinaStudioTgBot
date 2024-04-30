@@ -2,10 +2,10 @@ package org.xtinastudio.com.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import org.xtinastudio.com.entity.SalonInfo;
+import org.xtinastudio.com.entity.Salon;
 
 @Repository
-public interface SalonInfoJpaRepository extends JpaRepository<SalonInfo, Long> {
+public interface SalonJpaRepository extends JpaRepository<Salon, Long> {
 
-    SalonInfo findByName(String name);
+    Salon findByAddress(String address);
 }

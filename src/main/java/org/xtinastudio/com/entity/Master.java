@@ -53,4 +53,8 @@ public class Master {
 
     @OneToMany(mappedBy = "master")
     private List<MasterReview> masterReviews;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "salon_id")
+    private Salon salon;
 }
