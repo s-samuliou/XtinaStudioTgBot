@@ -1,5 +1,6 @@
 package org.xtinastudio.com.service;
 
+import org.xtinastudio.com.entity.Salon;
 import org.xtinastudio.com.entity.Services;
 
 import java.util.List;
@@ -13,6 +14,8 @@ public interface ServiceService {
     Services findById(Long id);
 
     Services findByName(String name);
+
+    List<Services> findBySalons(Salon salon);
 
     List<Services> getAll();
 

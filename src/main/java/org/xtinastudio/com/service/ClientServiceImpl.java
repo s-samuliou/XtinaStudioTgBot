@@ -28,6 +28,7 @@ public class ClientServiceImpl implements ClientService {
         existingClient.setName(client.getName());
         existingClient.setPhoneNumber(client.getPhoneNumber());
         existingClient.setLanguage(client.getLanguage());
+        existingClient.setSalon(client.getSalon());
 
         Client updatedClient = repository.save(existingClient);
 

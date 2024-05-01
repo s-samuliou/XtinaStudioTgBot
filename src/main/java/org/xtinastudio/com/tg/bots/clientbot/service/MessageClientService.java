@@ -29,7 +29,7 @@ public class MessageClientService {
     private ClientService clientService;
 
     @Autowired
-    private SalonService salonInfo;
+    private SalonService salonService;
 
     @Autowired
     private ServiceService serviceService;
@@ -65,10 +65,13 @@ public class MessageClientService {
                     sendMessage = aboutMasters(chatId);
                     break;
                 case "/salon_location":
-                    sendMessage = selectSalonLocation(chatId);
+                    sendLocation = sendSalonLocation(chatId);
+                    return sendLocation;
+                case "/change_salon":
+                    sendMessage = selectSalon(chatId);
                     break;
                 default:
-                    sendMessage.setText("I dont know this message :(");
+                    sendMessage.setText("Я не знаю такой команды :(\nВызовите главное меню через menu.");
                     break;
             }
 
@@ -83,9 +86,8 @@ public class MessageClientService {
                     sendMessage = menu(chatId);
                     state = new BookingState();
                     return sendMessage;
-                case "getToSalon":
-                    String address = getDataCallbackQuery(data, 1);
-                    sendLocation = sendSalonLocation(chatId, address);
+                case "wayToSalon":
+                    sendLocation = sendSalonLocation(chatId);
                     return sendLocation;
                 case "bookService":
                     sendMessage = bookService(chatId, state);
@@ -98,9 +100,6 @@ public class MessageClientService {
                     return sendMessage;
                 case "ourMasters":
                     sendMessage = aboutMasters(chatId);
-                    return sendMessage;
-                case "wayToSalon":
-                    sendMessage = selectSalonLocation(chatId);
                     return sendMessage;
                 case "service":
                     String service = getDataCallbackQuery(data, 1);
@@ -141,13 +140,22 @@ public class MessageClientService {
                 case "myServices":
                     sendMessage = myServices(chatId);
                     return sendMessage;
-                case "cancel":
+                case "approveCancel":
                     String idFormMessage = getDataCallbackQuery(data, 1);
-                    System.out.println(idFormMessage);
                     Long id = Long.parseLong(idFormMessage);
                     Appointment appointmentById = appointmentService.getById(id);
                     appointmentById.setStatus(AppointmentStatus.CANCELED);
                     appointmentService.editById(id, appointmentById);
+                    sendMessage = approveCancel(chatId);
+                    return sendMessage;
+                case "cancel":
+                    sendMessage = menu(chatId);
+                    return sendMessage;
+                case "selectSalon":
+                    String salonId = getDataCallbackQuery(data, 1);
+                    Client client = clientService.findByChatId(chatId);
+                    client.setSalon(salonService.findById(Long.parseLong(salonId)));
+                    clientService.editById(client.getId(), client);
                     sendMessage = menu(chatId);
                     return sendMessage;
                 default:
@@ -156,6 +164,37 @@ public class MessageClientService {
             }
         }
         return null;
+    }
+
+    public SendMessage selectSalon(Long chatId) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        StringBuilder text = new StringBuilder();
+
+        List<Salon> salons = salonService.getAll();
+
+        if (clientService.findByChatId(chatId).getSalon() == null) {
+            text.append("Поздравляем! Вы автоматически зарегестрированы в этом боте!\n");
+        }
+
+        text.append("Выберите салон для бронирования услуг:");
+        sendMessage.setText(text.toString());
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        for (Salon salon : salons) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(salon.getAddress());
+            button.setCallbackData("selectSalon_" + salon.getId());
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            row.add(button);
+            keyboard.add(row);
+        }
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        return sendMessage;
     }
 
     public SendMessage myServices(Long chatId) {
@@ -186,12 +225,7 @@ public class MessageClientService {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("Back to Menu");
-        backButton.setCallbackData("menu");
-        List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
-        backButtonRow.add(backButton);
-        keyboard.add(backButtonRow);
+        addMainMenuButton(keyboard);
 
         markup.setKeyboard(keyboard);
         sendMessage.setReplyMarkup(markup);
@@ -242,15 +276,10 @@ public class MessageClientService {
         approveButtonRow.add(approveButton);
         keyboard.add(approveButtonRow);
 
-        InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("Back to Menu");
-        backButton.setCallbackData("menu");
-        List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
-        backButtonRow.add(backButton);
-        keyboard.add(backButtonRow);
+        addMainMenuButton(keyboard);
 
         markup.setKeyboard(keyboard);
-        sendMessage.setReplyMarkup(markup);
+        sendMessage.setReplyMarkup(markup);;
 
         return sendMessage;
     }
@@ -259,9 +288,12 @@ public class MessageClientService {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
 
+        Client client = clientService.findByChatId(chatId);
+        Salon clientSalon = client.getSalon();
+
         if (!state.checkService()) {
             sendMessage.setText("Выберите услугу:");
-            List<Services> allServices = serviceService.getAll();
+            List<Services> allServices = serviceService.findBySalons(clientSalon);
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -277,12 +309,7 @@ public class MessageClientService {
                 keyboard.add(row);
             }
 
-            InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText("Back to Menu");
-            button.setCallbackData("menu");
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(button);
-            keyboard.add(row);
+            addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
             sendMessage.setReplyMarkup(markup);
@@ -292,7 +319,7 @@ public class MessageClientService {
 
         if (!state.checkMaster()) {
             sendMessage.setText("Выберите мастера:");
-            List<Master> allMasters = masterService.findByServicesContaining(state.getService());
+            List<Master> allMasters = masterService.findByServicesContainingAndSalon(state.getService(), clientSalon);
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -308,12 +335,7 @@ public class MessageClientService {
                 keyboard.add(row);
             }
 
-            InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText("Back to Menu");
-            button.setCallbackData("menu");
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(button);
-            keyboard.add(row);
+            addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
             sendMessage.setReplyMarkup(markup);
@@ -341,12 +363,7 @@ public class MessageClientService {
                 keyboard.add(row);
             }
 
-            InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText("Back to Menu");
-            button.setCallbackData("menu");
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(button);
-            keyboard.add(row);
+            addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
             sendMessage.setReplyMarkup(markup);
@@ -392,17 +409,11 @@ public class MessageClientService {
                 }
             }
 
-            // Если есть оставшиеся кнопки в последней строке, добавьте их
             if (!row.isEmpty()) {
                 keyboard.add(row);
             }
 
-            InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText("Back to Menu");
-            button.setCallbackData("menu");
-            List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
-            backButtonRow.add(button);
-            keyboard.add(backButtonRow);
+            addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
             sendMessage.setReplyMarkup(markup);
@@ -429,7 +440,7 @@ public class MessageClientService {
 
         availableDates.add(currentDate);
 
-        while (availableDates.size() < 6) {
+        while (availableDates.size() < 25) {
             LocalDate nextDate = currentDate.plusDays(daysToAdd);
             if (nextDate.getDayOfWeek() != DayOfWeek.SATURDAY && nextDate.getDayOfWeek() != DayOfWeek.SUNDAY) {
                 availableDates.add(nextDate);
@@ -438,6 +449,34 @@ public class MessageClientService {
         }
 
         return availableDates;
+    }
+
+    public SendMessage approveCancel(Long chatId) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        sendMessage.setText("Вы действительно хотите отменить услугу?\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        InlineKeyboardButton yesButton = new InlineKeyboardButton();
+        yesButton.setText("Да");
+        yesButton.setCallbackData("cancel");
+        List<InlineKeyboardButton> yesButtonRow = new ArrayList<>();
+        yesButtonRow.add(yesButton);
+        keyboard.add(yesButtonRow);
+
+        InlineKeyboardButton backButton = new InlineKeyboardButton();
+        backButton.setText("Нет");
+        backButton.setCallbackData("menu");
+        List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
+        backButtonRow.add(backButton);
+        keyboard.add(backButtonRow);
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        return sendMessage;
     }
 
     public SendMessage cancelService(Long chatId) {
@@ -471,7 +510,7 @@ public class MessageClientService {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText("Отменить " + counter);
-                button.setCallbackData("cancel_" + appointment.getId());
+                button.setCallbackData("approveCancel_" + appointment.getId());
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 row.add(button);
                 keyboard.add(row);
@@ -479,12 +518,7 @@ public class MessageClientService {
             }
         }
 
-        InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("Back to Menu");
-        backButton.setCallbackData("menu");
-        List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
-        backButtonRow.add(backButton);
-        keyboard.add(backButtonRow);
+        addMainMenuButton(keyboard);
 
         markup.setKeyboard(keyboard);
         sendMessage.setReplyMarkup(markup);
@@ -548,49 +582,24 @@ public class MessageClientService {
         return message;
     }
 
-    public SendMessage selectSalonLocation(Long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Select salon location:");
-
-        List<Salon> allSalons = salonInfo.getAll();
-
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-        for (Salon salon : allSalons) {
-            InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(salon.getAddress());
-            button.setCallbackData("getToSalon_" + salon.getAddress());
-
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(button);
-
-            keyboard.add(row);
-        }
-
-        InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Back to Menu");
-        button.setCallbackData("menu");
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        row.add(button);
-        keyboard.add(row);
-
-        markup.setKeyboard(keyboard);
-        message.setReplyMarkup(markup);
-
-        return message;
-    }
-
-    public SendLocation sendSalonLocation(Long chatId, String address) {
+    public SendLocation sendSalonLocation(Long chatId) {
         SendLocation sendLocation = new SendLocation();
 
-        Salon salon = salonInfo.findByName(address);
+        Client client = clientService.findByChatId(chatId);
+        Salon salon = salonService.findByName(client.getSalon().getAddress());
 
         if (salon != null) {
             sendLocation.setChatId(chatId);
             sendLocation.setLatitude(salon.getLatitude());
             sendLocation.setLongitude(salon.getLongitude());
+
+            InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+            addMainMenuButton(keyboard);
+
+            markup.setKeyboard(keyboard);
+            sendLocation.setReplyMarkup(markup);
         }
 
         return sendLocation;
@@ -632,13 +641,29 @@ public class MessageClientService {
             }
 
             clientService.create(client);
-            sendMessage.setText(String.format("Welcome %s! You are automatically registered and can work with the bot!", update.getMessage().getChat().getFirstName()));
-            sendMessage.setChatId(update.getMessage().getChatId());
+            sendMessage = selectSalon(update.getMessage().getChatId());
         } else {
-            sendMessage.setText("You are already registered and can work with the bot!");
+            sendMessage.setText("Вы уже зарегестрированы и можете пользоваться ботом!");
             sendMessage.setChatId(update.getMessage().getChatId());
+
+            InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+            addMainMenuButton(keyboard);
+
+            markup.setKeyboard(keyboard);
+            sendMessage.setReplyMarkup(markup);
         }
 
         return sendMessage;
+    }
+
+    private void addMainMenuButton(List<List<InlineKeyboardButton>> keyboard) {
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText("Главное меню");
+        button.setCallbackData("menu");
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(button);
+        keyboard.add(row);
     }
 }

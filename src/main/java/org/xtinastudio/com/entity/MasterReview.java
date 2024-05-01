@@ -29,6 +29,4 @@ public class MasterReview {
 
     @Column(name = "review_date")
     private LocalDateTime reviewDate;
-
-
 }

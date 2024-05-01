@@ -29,11 +29,12 @@ public class ClientBot extends TelegramLongPollingBot {
 
         List<BotCommand> commandList = new ArrayList<>();
         commandList.add(new BotCommand("/start", "Начать использовать бот"));
-        commandList.add(new BotCommand("/menu", "Показать меню"));
+        commandList.add(new BotCommand("/menu", "Главное меню"));
         commandList.add(new BotCommand("/my_services", "Показать забронированные услуги"));
         commandList.add(new BotCommand("/about", "Информация о салоне"));
         commandList.add(new BotCommand("/masters", "Информация о мастерах"));
         commandList.add(new BotCommand("/salon_location", "Показать местоположение салона"));
+        commandList.add(new BotCommand("/change_salon", "Поменять салон"));
         try {
             this.execute(new SetMyCommands(commandList, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {

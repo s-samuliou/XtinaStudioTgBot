@@ -1,6 +1,7 @@
 package org.xtinastudio.com.service;
 
 import org.xtinastudio.com.entity.Master;
+import org.xtinastudio.com.entity.Salon;
 import org.xtinastudio.com.entity.Services;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public interface MasterService {
 
     Master findByName(String name);
 
-    List<Master> findByServicesContaining(Services services);
+    List<Master> findByServicesContainingAndSalon(Services services, Salon salon);
 
     List<Master> getAll();
 
