@@ -18,7 +18,11 @@ public interface MasterService {
 
     Master findByName(String name);
 
+    Master findByChatId(Long chatId);
+
     List<Master> findByServicesContainingAndSalon(Services services, Salon salon);
+
+    boolean existsByChatId(Long chatId);
 
     List<Master> getAll();
 

@@ -24,4 +24,7 @@ public interface AppointmentJpaRepository extends JpaRepository<Appointment, Lon
 
     @Query("SELECT a FROM Appointment a WHERE a.client = :client")
     List<Appointment> getAppointmentsByClient(@Param("client") Client client);
+
+    @Query("SELECT a FROM Appointment a WHERE a.master = :master")
+    List<Appointment> getAppointmentsByMaster(@Param("master") Master master);
 }

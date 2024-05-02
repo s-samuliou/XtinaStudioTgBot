@@ -14,6 +14,7 @@ import org.xtinastudio.com.enums.AppointmentStatus;
 import org.xtinastudio.com.enums.Language;
 import org.xtinastudio.com.enums.WorkTime;
 import org.xtinastudio.com.service.*;
+import org.xtinastudio.com.tg.bots.masterbot.service.MasterNotice;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -40,7 +41,12 @@ public class MessageClientService {
     @Autowired
     private AppointmentService appointmentService;
 
+    @Autowired
+    private MasterNotice masterNotice;
+
     private BookingState state = new BookingState();
+
+    private Long canceledAppointment = null;
 
     public BotApiMethod<?> mainCommands(Update update) {
         SendMessage sendMessage = new SendMessage();
@@ -92,9 +98,6 @@ public class MessageClientService {
                 case "bookService":
                     sendMessage = bookService(chatId, state);
                     return sendMessage;
-                case "cancelService":
-                    sendMessage = cancelService(chatId);
-                    return sendMessage;
                 case "aboutSalon":
                     sendMessage = aboutSalon(chatId);
                     return sendMessage;
@@ -136,9 +139,13 @@ public class MessageClientService {
                     appointmentService.create(appointment);
                     state = new BookingState();
                     sendMessage = menu(chatId);
+                    masterNotice.sendBookedNoticeToMaster(appointment);
                     return sendMessage;
                 case "myServices":
                     sendMessage = myServices(chatId);
+                    return sendMessage;
+                case "cancelService":
+                    sendMessage = cancelService(chatId);
                     return sendMessage;
                 case "approveCancel":
                     String idFormMessage = getDataCallbackQuery(data, 1);
@@ -146,10 +153,13 @@ public class MessageClientService {
                     Appointment appointmentById = appointmentService.getById(id);
                     appointmentById.setStatus(AppointmentStatus.CANCELED);
                     appointmentService.editById(id, appointmentById);
-                    sendMessage = approveCancel(chatId);
-                    return sendMessage;
-                case "cancel":
+                    masterNotice.sendCanceledNoticeToMaster(appointmentById);
                     sendMessage = menu(chatId);
+                    return sendMessage;
+                case "chooseCancel":
+                    String message = getDataCallbackQuery(data, 1);
+                    Long idMessage = Long.parseLong(message);
+                    sendMessage = approveCancel(chatId, idMessage);
                     return sendMessage;
                 case "selectSalon":
                     String salonId = getDataCallbackQuery(data, 1);
@@ -440,7 +450,7 @@ public class MessageClientService {
 
         availableDates.add(currentDate);
 
-        while (availableDates.size() < 25) {
+        while (availableDates.size() < 11) {
             LocalDate nextDate = currentDate.plusDays(daysToAdd);
             if (nextDate.getDayOfWeek() != DayOfWeek.SATURDAY && nextDate.getDayOfWeek() != DayOfWeek.SUNDAY) {
                 availableDates.add(nextDate);
@@ -451,7 +461,7 @@ public class MessageClientService {
         return availableDates;
     }
 
-    public SendMessage approveCancel(Long chatId) {
+    public SendMessage approveCancel(Long chatId, Long appointmentId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText("Вы действительно хотите отменить услугу?\n");
@@ -461,7 +471,7 @@ public class MessageClientService {
 
         InlineKeyboardButton yesButton = new InlineKeyboardButton();
         yesButton.setText("Да");
-        yesButton.setCallbackData("cancel");
+        yesButton.setCallbackData("approveCancel_" + appointmentId);
         List<InlineKeyboardButton> yesButtonRow = new ArrayList<>();
         yesButtonRow.add(yesButton);
         keyboard.add(yesButtonRow);
@@ -510,7 +520,7 @@ public class MessageClientService {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText("Отменить " + counter);
-                button.setCallbackData("approveCancel_" + appointment.getId());
+                button.setCallbackData("chooseCancel_" + appointment.getId());
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 row.add(button);
                 keyboard.add(row);

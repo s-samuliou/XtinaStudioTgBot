@@ -265,7 +265,7 @@
     <changeSet id="25" author="s_samuliou">
         <insert tableName="appointments">
             <column name="appointment_date" value="2024-04-22T12:00:00"/>
-            <column name="appointment_time" value="10"/>
+            <column name="appointment_time" value="1"/>
             <column name="status" value="BANNED"/>
             <column name="client_id" value="1"/>
             <column name="master_id" value="1"/>

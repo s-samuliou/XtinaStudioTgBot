@@ -20,6 +20,8 @@ public interface AppointmentService {
 
     List<Appointment> getAppointmentsByClient(Client client);
 
+    List<Appointment> getAppointmentsByMaster(Master master);
+
     Appointment getById(Long id);
 
     List<Appointment> getAll();

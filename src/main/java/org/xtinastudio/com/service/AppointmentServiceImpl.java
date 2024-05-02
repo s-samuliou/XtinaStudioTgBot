@@ -51,6 +51,11 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    public List<Appointment> getAppointmentsByMaster(Master master) {
+        return repository.getAppointmentsByMaster(master);
+    }
+
+    @Override
     public Appointment getById(Long id) {
         return repository.findById(id).orElseThrow(() -> new AppointmentNotFoundException("Appointment not found with id: " + id));
     }

@@ -26,6 +26,7 @@ public class MasterServiceImpl implements MasterService {
         Master existingMaster = repository.findById(id).orElseThrow(() -> new MasterNotFoundException("Master not found with id: " + id));
 
         existingMaster.setName(master.getName());
+        existingMaster.setChatId(master.getChatId());
         existingMaster.setLastName(master.getLastName());
         existingMaster.setDescription(master.getDescription());
         existingMaster.setPhotoUrl(master.getPhotoUrl());
@@ -55,8 +56,18 @@ public class MasterServiceImpl implements MasterService {
     }
 
     @Override
+    public Master findByChatId(Long chatId) {
+        return repository.findByChatId(chatId);
+    }
+
+    @Override
     public List<Master> findByServicesContainingAndSalon(Services services, Salon salon) {
         return repository.findByServicesContainingAndSalon(services, salon);
+    }
+
+    @Override
+    public boolean existsByChatId(Long chatId) {
+        return repository.existsByChatId(chatId);
     }
 
 

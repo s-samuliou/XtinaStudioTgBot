@@ -2,6 +2,7 @@ package org.xtinastudio.com.enums;
 
 public enum WorkTime {
 
+   /* EIGHT("8:00"),*/
     NINE("9:00"),
     TEN("10:00"),
     ELEVEN("11:00"),
