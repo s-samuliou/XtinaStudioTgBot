@@ -1,5 +1,6 @@
 package org.xtinastudio.com.tg.bots.masterbot.service;
 
+import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -145,7 +146,7 @@ public class MasterBot extends TelegramLongPollingBot {
         StringBuilder text = new StringBuilder();
 
         if (masterService.existsByChatId(chatId)) {
-            text.append("Вы уже авторизованы! Можете пользоваться ботом!");
+            text.append(":fireworks: Вы уже авторизованы! Можете пользоваться ботом!:fireworks:");
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -155,11 +156,12 @@ public class MasterBot extends TelegramLongPollingBot {
             markup.setKeyboard(keyboard);
             sendMessage.setReplyMarkup(markup);
         } else {
-            text.append("Добро пожаловать в чат-бот для мастеров!\n")
-                    .append("Введите пожалуйста ваши логин и пароль через пробел (login password)");
+            text.append(":tada: Добро пожаловать в чат-бот для мастеров!:tada:\n")
+                    .append(":closed_lock_with_key: Введите пожалуйста ваши логин и пароль через пробел (login password) :closed_lock_with_key:");
         }
 
-        sendMessage.setText(text.toString());
+        String s = EmojiParser.parseToUnicode(text.toString());
+        sendMessage.setText(s);
 
         return sendMessage;
     }
@@ -168,17 +170,17 @@ public class MasterBot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         StringBuilder text = new StringBuilder();
-        text.append("Забронированные услуги:\n");
+        text.append(":calendar:").append("Забронированные услуги:").append(":calendar:").append("\n");
 
         Master master = masterService.findByChatId(chatId);
         List<Appointment> appointmentsByMaster = appointmentService.getAppointmentsByMaster(master);
 
         for (Appointment appointment : appointmentsByMaster) {
             if (appointment.getStatus().equals(AppointmentStatus.BANNED)) {
-                text.append("Клиент: ").append(appointment.getClient().getName()).append("\n")
-                        .append("Услуга: ").append(appointment.getService().getName()).append("\n")
-                        .append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
-                        .append("Время: ").append(appointment.getAppointmentTime()).append("\n\n");
+                text.append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
+                        .append(":bell:").append("Услуга: ").append(appointment.getService().getName()).append("\n")
+                        .append(":calendar:").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
+                        .append(":mantelpiece_clock:").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n\n");
             }
         }
 
@@ -190,10 +192,10 @@ public class MasterBot extends TelegramLongPollingBot {
         markup.setKeyboard(keyboard);
         sendMessage.setReplyMarkup(markup);
 
-        sendMessage.setText(text.toString());
+        String s = EmojiParser.parseToUnicode(text.toString());
+        sendMessage.setText(s);
         return sendMessage;
     }
-
 
     private SendMessage authorizeMaster(Long chatId, String login, String password) {
         SendMessage sendMessage = new SendMessage();
@@ -239,21 +241,22 @@ public class MasterBot extends TelegramLongPollingBot {
     private SendMessage menu(Long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText("Выберите действие из меню:");
+        message.setText(convertToEmoji(":point_up: Выберите действие из меню :point_up:"));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton();
-        button1.setText("Посмотреть записи");
+
+        button1.setText(convertToEmoji(":mag_right: Посмотреть записи :mag_right:"));
         button1.setCallbackData("myServices");
         row1.add(button1);
         keyboard.add(row1);
 
         List<InlineKeyboardButton> row2 = new ArrayList<>();
         InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText("Добраться до салона");
+        button2.setText(convertToEmoji(":oncoming_taxi: Добраться до салона :oncoming_taxi:"));
         button2.setCallbackData("wayToSalon");
         row2.add(button2);
         keyboard.add(row2);
@@ -297,17 +300,14 @@ public class MasterBot extends TelegramLongPollingBot {
         Services service = appointment.getService();
 
         sendMessage.setChatId(master.getChatId());
+        text.append(":white_check_mark:").append("У вас новая запись!").append(":white_check_mark:").append("\n")
+                .append(":elf:").append("Клиент: ").append(client.getName()).append("\n")
+                .append(":bell:").append("Услуга: ").append(service.getName()).append("\n")
+                .append(":calendar:").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
+                .append(":mantelpiece_clock:").append("Время: ").append(appointment.getAppointmentTime().getDescription());
 
-        text.append("У вас новая запись!\n")
-                .append("Клиент: ").append(client.getName())
-                .append("Услуга: ").append(service.getName())
-                .append("Дата: ").append(appointment.getAppointmentDate())
-                .append("Время: ").append(appointment.getAppointmentTime());
-
-        sendMessage.setText(text.toString());
-        log.info("Master chatId - " + master.getChatId());
-        log.info("Client name - " + client.getName());
-        log.info("Service name - " + service.getName());
+        String emojiString = EmojiParser.parseToUnicode(text.toString());
+        sendMessage.setText(emojiString);
 
         try {
             execute(sendMessage);
@@ -328,13 +328,14 @@ public class MasterBot extends TelegramLongPollingBot {
 
         sendMessage.setChatId(master.getChatId());
 
-        text.append("У вас отмена записи!\n")
-                .append("Клиент: ").append(client.getName())
-                .append("Услуга: ").append(service.getName())
-                .append("Дата: ").append(appointment.getAppointmentDate())
-                .append("Время: ").append(appointment.getAppointmentTime());
+        text.append(":x:").append("У вас отмена записи!").append(":x:").append("\n")
+                .append(":elf:").append("Клиент: ").append(client.getName()).append("\n")
+                .append(":bell:").append("Услуга: ").append(service.getName()).append("\n")
+                .append(":calendar:").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
+                .append(":mantelpiece_clock:").append("Время: ").append(appointment.getAppointmentTime().getDescription());
 
-        sendMessage.setText(text.toString());
+        String emojiString = EmojiParser.parseToUnicode(text.toString());
+        sendMessage.setText(emojiString);
 
         try {
             execute(sendMessage);
@@ -347,7 +348,7 @@ public class MasterBot extends TelegramLongPollingBot {
 
     private void addMainMenuButton(List<List<InlineKeyboardButton>> keyboard) {
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Главное меню");
+        button.setText(convertToEmoji(":house_with_garden: Главное меню :house_with_garden:"));
         button.setCallbackData("menu");
         List<InlineKeyboardButton> row = new ArrayList<>();
         row.add(button);
@@ -358,6 +359,11 @@ public class MasterBot extends TelegramLongPollingBot {
         String[] parts = data.split("_");
         String address = parts[x];
         return address;
+    }
+
+    private String convertToEmoji(String text) {
+        String s = EmojiParser.parseToUnicode(text);
+        return s;
     }
 
     private String splitLoginAndPassword(String data, int x) {
