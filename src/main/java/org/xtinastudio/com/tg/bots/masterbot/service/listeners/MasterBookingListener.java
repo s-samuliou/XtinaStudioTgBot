@@ -2,14 +2,14 @@ package org.xtinastudio.com.tg.bots.masterbot.service.listeners;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.xtinastudio.com.tg.bots.masterbot.service.MessageMasterService;
+import org.xtinastudio.com.tg.bots.masterbot.service.MasterBot;
 import org.xtinastudio.com.tg.bots.masterbot.service.events.BookingEvent;
 
 @Component
 public class MasterBookingListener {
-    private final MessageMasterService messageMasterService;
+    private final MasterBot messageMasterService;
 
-    public MasterBookingListener(MessageMasterService messageMasterService) {
+    public MasterBookingListener(MasterBot messageMasterService) {
         this.messageMasterService = messageMasterService;
     }
 
