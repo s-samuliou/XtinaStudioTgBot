@@ -180,7 +180,7 @@ public class MasterBot extends TelegramLongPollingBot {
                 text.append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
                         .append(":bell:").append("Услуга: ").append(appointment.getService().getName()).append("\n")
                         .append(":calendar:").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
-                        .append(":mantelpiece_clock:").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n\n");
+                        .append(":calendar:").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n\n");
             }
         }
 
@@ -241,7 +241,7 @@ public class MasterBot extends TelegramLongPollingBot {
     private SendMessage menu(Long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText(convertToEmoji(":point_up: Выберите действие из меню :point_up:"));
+        message.setText(convertToEmoji(":point_down: Выберите действие из меню :point_down:"));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();

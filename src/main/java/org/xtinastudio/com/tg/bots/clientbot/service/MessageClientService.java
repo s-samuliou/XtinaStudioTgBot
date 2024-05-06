@@ -1,5 +1,6 @@
 package org.xtinastudio.com.tg.bots.clientbot.service;
 
+import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -184,11 +185,11 @@ public class MessageClientService {
         List<Salon> salons = salonService.getAll();
 
         if (clientService.findByChatId(chatId).getSalon() == null) {
-            text.append("Поздравляем! Вы автоматически зарегестрированы в этом боте!\n");
+            text.append(":sparkles:").append("Поздравляем! Вы автоматически зарегестрированы в этом боте!\n");
         }
 
-        text.append("Выберите салон для бронирования услуг:");
-        sendMessage.setText(text.toString());
+        text.append(":point_down:").append("Выберите салон для бронирования услуг").append(":point_down:");
+        sendMessage.setText(convertToEmoji(text.toString()));
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
@@ -213,24 +214,19 @@ public class MessageClientService {
         Client client = clientService.findByChatId(chatId);
         List<Appointment> appointmentsByClient = appointmentService.getAppointmentsByClient(client);
 
-        StringBuilder messageText = new StringBuilder("Ваши забронированные услуги:\n");
+        StringBuilder messageText = new StringBuilder(":mag_right: Ваши забронированные услуги :mag_right:\n");
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 messageText
-                        .append("Услуга: " + appointment.getService().getName())
-                        .append("\n")
-                        .append("Мастер: " + appointment.getMaster().getName())
-                        .append("\n")
-                        .append("Дата: " + appointment.getAppointmentDate())
-                        .append("\n")
-                        .append("Время: " + appointment.getAppointmentTime().getDescription())
-                        .append("\n")
-                        .append("Цена: " + appointment.getService().getPrice())
-                        .append("\n\n");
+                        .append(":bell: ").append("Услуга: " + appointment.getService().getName()).append("\n")
+                        .append(":woman_artist: ").append("Мастер: " + appointment.getMaster().getName()).append("\n")
+                        .append(":calendar: ").append("Дата: " + appointment.getAppointmentDate()).append("\n")
+                        .append(":mantelpiece_clock: ").append("Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
+                        .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append("\n\n");
             }
         }
 
-        sendMessage.setText(messageText.toString());
+        sendMessage.setText(convertToEmoji(messageText.toString()));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -268,19 +264,19 @@ public class MessageClientService {
         WorkTime workTime = state.getWorkTime();
 
         StringBuilder text = new StringBuilder();
-        text.append("Подтвердите выбор услуги:\n")
-                .append(service.getName()).append("\n")
-                .append(master.getName()).append("\n")
-                .append(date.toString()).append("\n")
-                .append(workTime.getDescription());
+        text.append(":point_down: Подтвердите выбор услуги :point_down:\n")
+                .append(":bell: ").append(service.getName()).append("\n")
+                .append(":woman_artist: ").append(master.getName()).append("\n")
+                .append(":calendar: ").append(date.toString()).append("\n")
+                .append(":mantelpiece_clock: ").append(workTime.getDescription());
 
-        sendMessage.setText(text.toString());
+        sendMessage.setText(convertToEmoji(text.toString()));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         InlineKeyboardButton approveButton = new InlineKeyboardButton();
-        approveButton.setText("Подтверждаю");
+        approveButton.setText(convertToEmoji(":white_check_mark: Подтверждаю :white_check_mark:"));
         approveButton.setCallbackData("approve");
         List<InlineKeyboardButton> approveButtonRow = new ArrayList<>();
         approveButtonRow.add(approveButton);
@@ -302,7 +298,7 @@ public class MessageClientService {
         Salon clientSalon = client.getSalon();
 
         if (!state.checkService()) {
-            sendMessage.setText("Выберите услугу:");
+            sendMessage.setText(convertToEmoji(":point_down: Выберите услугу :point_down:\n"));
             List<Services> allServices = serviceService.findBySalons(clientSalon);
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -310,7 +306,7 @@ public class MessageClientService {
 
             for (Services service : allServices) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(service.getName());
+                button.setText(convertToEmoji(":fleur_de_lis:" + service.getName() + ":fleur_de_lis:"));
                 button.setCallbackData("service_" + service.getName());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
@@ -328,7 +324,7 @@ public class MessageClientService {
         }
 
         if (!state.checkMaster()) {
-            sendMessage.setText("Выберите мастера:");
+            sendMessage.setText(convertToEmoji(":woman_artist: Выберите мастера :point_down:\n"));
             List<Master> allMasters = masterService.findByServicesContainingAndSalon(state.getService(), clientSalon);
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -336,7 +332,7 @@ public class MessageClientService {
 
             for (Master master : allMasters) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(master.getName());
+                button.setText(convertToEmoji(":star:" + master.getName() + ":star:"));
                 button.setCallbackData("master_" + master.getId());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
@@ -354,7 +350,7 @@ public class MessageClientService {
         }
 
         if (!state.checkDate()) {
-            sendMessage.setText("Выберите дату:");
+            sendMessage.setText(convertToEmoji(":calendar: Выберите дату :point_down:\n"));
             List<LocalDate> allDates = getAvailableDates();
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -382,7 +378,7 @@ public class MessageClientService {
         }
 
         if (!state.checkTime()) {
-            sendMessage.setText("Выберите время:");
+            sendMessage.setText(convertToEmoji(":mantelpiece_clock: Выберите время :point_down:\n"));
 
             List<Appointment> appointments = appointmentService.getAppointmentsByDateAndServiceAndMaster(
                     state.getDate(), state.getMaster());
@@ -435,11 +431,9 @@ public class MessageClientService {
     }
 
     private boolean isTimeInPast(WorkTime workTime, int currentHour, int currentMinute) {
-        // Получаем час и минуты начала выбранного времени
-        int timeHour = workTime.ordinal() / 2 + 10; // Предполагается, что интервалы начинаются с 10:00
+        int timeHour = workTime.ordinal() / 2 + 10;
         int timeMinute = workTime.ordinal() % 2 == 0 ? 0 : 30;
 
-        // Проверяем, если текущее время позже чем начало выбранного времени на 15 минут
         return (currentHour > timeHour || (currentHour == timeHour && currentMinute >= timeMinute + 15));
     }
 
@@ -464,20 +458,20 @@ public class MessageClientService {
     public SendMessage approveCancel(Long chatId, Long appointmentId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
-        sendMessage.setText("Вы действительно хотите отменить услугу?\n");
+        sendMessage.setText(convertToEmoji(":question_mark: Вы действительно хотите отменить услугу :question_mark:\n"));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         InlineKeyboardButton yesButton = new InlineKeyboardButton();
-        yesButton.setText("Да");
+        yesButton.setText(convertToEmoji(":white_check_mark: Да :white_check_mark:"));
         yesButton.setCallbackData("approveCancel_" + appointmentId);
         List<InlineKeyboardButton> yesButtonRow = new ArrayList<>();
         yesButtonRow.add(yesButton);
         keyboard.add(yesButtonRow);
 
         InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("Нет");
+        backButton.setText(convertToEmoji(":x: Нет :x:"));
         backButton.setCallbackData("menu");
         List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
         backButtonRow.add(backButton);
@@ -497,20 +491,20 @@ public class MessageClientService {
         Client client = clientService.findByChatId(chatId);
         List<Appointment> appointmentsByClient = appointmentService.getAppointmentsByClient(client);
 
-        StringBuilder messageText = new StringBuilder("Ваши забронированные услуги:\n");
+        StringBuilder messageText = new StringBuilder(convertToEmoji(":spiral_notepad: Ваши забронированные услуги :point_down:\n"));
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 messageText
                         .append("Номер: ").append(counter++).append("\n")
-                        .append("Услуга: " + appointment.getService().getName()).append("\n")
-                        .append("Мастер: " + appointment.getMaster().getName()).append("\n")
-                        .append("Дата: " + appointment.getAppointmentDate()).append("\n")
-                        .append("Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
-                        .append("Цена: " + appointment.getService().getPrice()).append("\n\n");
+                        .append(":bell: Услуга: " + appointment.getService().getName()).append("\n")
+                        .append(":woman_artist: Мастер: " + appointment.getMaster().getName()).append("\n")
+                        .append(":calendar: Дата: " + appointment.getAppointmentDate()).append("\n")
+                        .append(":mantelpiece_clock:: Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
+                        .append(":money_with_wings: Цена: " + appointment.getService().getPrice()).append("\n\n");
             }
         }
 
-        sendMessage.setText(messageText.toString());
+        sendMessage.setText(convertToEmoji(messageText.toString()));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -519,7 +513,7 @@ public class MessageClientService {
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText("Отменить " + counter);
+                button.setText(convertToEmoji(":x: Отменить " + counter + " :x:"));
                 button.setCallbackData("chooseCancel_" + appointment.getId());
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 row.add(button);
@@ -539,49 +533,49 @@ public class MessageClientService {
     public SendMessage menu(Long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText("Выберите действие из меню:");
+        message.setText(convertToEmoji(":point_down: Выберите действие из меню :point_down:"));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton();
-        button1.setText("Запись на услугу");
+        button1.setText(convertToEmoji(":calendar: Запись на услугу :calendar:"));
         button1.setCallbackData("bookService");
         row1.add(button1);
         keyboard.add(row1);
 
         List<InlineKeyboardButton> row2 = new ArrayList<>();
         InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText("Отмена записи на услугу");
+        button2.setText(convertToEmoji(":x: Отмена записи :x:"));
         button2.setCallbackData("cancelService");
         row2.add(button2);
         keyboard.add(row2);
 
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Мои записи");
+        button.setText(convertToEmoji(":mag_right: Мои записи :mag_right:"));
         button.setCallbackData("myServices");
         row.add(button);
         keyboard.add(row);
 
         List<InlineKeyboardButton> row3 = new ArrayList<>();
         InlineKeyboardButton button3 = new InlineKeyboardButton();
-        button3.setText("О салоне");
+        button3.setText(convertToEmoji(":office: О салоне :office:"));
         button3.setCallbackData("aboutSalon");
         row3.add(button3);
         keyboard.add(row3);
 
         List<InlineKeyboardButton> row4 = new ArrayList<>();
         InlineKeyboardButton button4 = new InlineKeyboardButton();
-        button4.setText("Наши мастера");
+        button4.setText(convertToEmoji(":woman_artist: Наши мастера :woman_artist:"));
         button4.setCallbackData("ourMasters");
         row4.add(button4);
         keyboard.add(row4);
 
         List<InlineKeyboardButton> row5 = new ArrayList<>();
         InlineKeyboardButton button5 = new InlineKeyboardButton();
-        button5.setText("Добраться до салона");
+        button5.setText(convertToEmoji(":oncoming_taxi: Добраться до салона :oncoming_taxi:"));
         button5.setCallbackData("wayToSalon");
         row5.add(button5);
         keyboard.add(row5);
@@ -624,7 +618,7 @@ public class MessageClientService {
     public SendMessage aboutMasters(Long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
-        sendMessage.setText("It's information about our masters!");
+        sendMessage.setText("Здесь будет информация о мастрах!");
 
         return sendMessage;
     }
@@ -632,7 +626,7 @@ public class MessageClientService {
     public SendMessage aboutSalon(Long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
-        sendMessage.setText("It's information about this salon!");
+        sendMessage.setText("Здесь будет информация о этом салоне!");
 
         return sendMessage;
     }
@@ -653,7 +647,7 @@ public class MessageClientService {
             clientService.create(client);
             sendMessage = selectSalon(update.getMessage().getChatId());
         } else {
-            sendMessage.setText("Вы уже зарегестрированы и можете пользоваться ботом!");
+            sendMessage.setText(convertToEmoji(":fireworks: Вы уже зарегестрированы и можете пользоваться ботом! :fireworks:"));
             sendMessage.setChatId(update.getMessage().getChatId());
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -670,10 +664,15 @@ public class MessageClientService {
 
     private void addMainMenuButton(List<List<InlineKeyboardButton>> keyboard) {
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Главное меню");
+        button.setText(convertToEmoji(":house_with_garden: Главное меню :house_with_garden:"));
         button.setCallbackData("menu");
         List<InlineKeyboardButton> row = new ArrayList<>();
         row.add(button);
         keyboard.add(row);
+    }
+
+    private String convertToEmoji(String text) {
+        String s = EmojiParser.parseToUnicode(text);
+        return s;
     }
 }
