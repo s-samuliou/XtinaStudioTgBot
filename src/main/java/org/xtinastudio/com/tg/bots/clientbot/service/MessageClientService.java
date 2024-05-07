@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -50,9 +51,11 @@ public class MessageClientService {
     private Long canceledAppointment = null;
 
     public BotApiMethod<?> mainCommands(Update update) {
+        EditMessageText editMessage = new EditMessageText();
         SendMessage sendMessage = new SendMessage();
         SendLocation sendLocation = new SendLocation();
         Long chatId = null;
+        Long messageId = null;
 
         if (update.hasMessage() && update.getMessage().hasText()) {
             chatId = update.getMessage().getChatId();
@@ -85,50 +88,56 @@ public class MessageClientService {
             return sendMessage;
         } else if (update.hasCallbackQuery()) {
             chatId = update.getCallbackQuery().getMessage().getChatId();
+            messageId = update.getCallbackQuery().getMessage().getMessageId().longValue();
+
             String data = update.getCallbackQuery().getData();
             String prefix = getDataCallbackQuery(data, 0);
 
             switch (prefix) {
-                case "menu":
+                case "menuSendMessage":
                     sendMessage = menu(chatId);
                     state = new BookingState();
                     return sendMessage;
+                case "menu":
+                    editMessage = menu(chatId, messageId);
+                    state = new BookingState();
+                    return editMessage;
                 case "wayToSalon":
                     sendLocation = sendSalonLocation(chatId);
                     return sendLocation;
                 case "bookService":
-                    sendMessage = bookService(chatId, state);
-                    return sendMessage;
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
                 case "aboutSalon":
-                    sendMessage = aboutSalon(chatId);
-                    return sendMessage;
+                    editMessage = aboutSalon(chatId, messageId);
+                    return editMessage;
                 case "ourMasters":
-                    sendMessage = aboutMasters(chatId);
-                    return sendMessage;
+                    editMessage = aboutMasters(chatId, messageId);
+                    return editMessage;
                 case "service":
                     String service = getDataCallbackQuery(data, 1);
                     Services serviceByName = serviceService.findByName(service);
                     state.setService(serviceByName);
-                    sendMessage = bookService(chatId, state);
-                    return sendMessage;
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
                 case "master":
                     String master = getDataCallbackQuery(data, 1);
                     Master masterById = masterService.findById(Long.parseLong(master));
                     state.setMaster(masterById);
-                    sendMessage = bookService(chatId, state);
-                    return sendMessage;
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
                 case "date":
                     String date = getDataCallbackQuery(data, 1);
                     LocalDate localDate = LocalDate.parse(date);
                     state.setDate(localDate);
-                    sendMessage = bookService(chatId, state);
-                    return sendMessage;
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
                 case "time":
                     String time = getDataCallbackQuery(data, 1);
                     WorkTime workTime = parseWorkTime(time);
                     state.setWorkTime(workTime);
-                    sendMessage = approveBookingService(chatId, state);
-                    return sendMessage;
+                    editMessage = approveBookingService(chatId, state, messageId);
+                    return editMessage;
                 case "approve":
                     Appointment appointment = new Appointment();
                     appointment.setService(state.getService());
@@ -139,15 +148,15 @@ public class MessageClientService {
                     appointment.setStatus(AppointmentStatus.BANNED);
                     appointmentService.create(appointment);
                     state = new BookingState();
-                    sendMessage = menu(chatId);
+                    editMessage = menu(chatId, messageId);
                     masterNotice.sendBookedNoticeToMaster(appointment);
-                    return sendMessage;
+                    return editMessage;
                 case "myServices":
-                    sendMessage = myServices(chatId);
-                    return sendMessage;
+                    editMessage = myServices(chatId, messageId);
+                    return editMessage;
                 case "cancelService":
-                    sendMessage = cancelService(chatId);
-                    return sendMessage;
+                    editMessage = cancelService(chatId, messageId);
+                    return editMessage;
                 case "approveCancel":
                     String idFormMessage = getDataCallbackQuery(data, 1);
                     Long id = Long.parseLong(idFormMessage);
@@ -155,20 +164,20 @@ public class MessageClientService {
                     appointmentById.setStatus(AppointmentStatus.CANCELED);
                     appointmentService.editById(id, appointmentById);
                     masterNotice.sendCanceledNoticeToMaster(appointmentById);
-                    sendMessage = menu(chatId);
-                    return sendMessage;
+                    editMessage = menu(chatId, messageId);
+                    return editMessage;
                 case "chooseCancel":
                     String message = getDataCallbackQuery(data, 1);
                     Long idMessage = Long.parseLong(message);
-                    sendMessage = approveCancel(chatId, idMessage);
-                    return sendMessage;
+                    editMessage = approveCancel(chatId, idMessage, messageId);
+                    return editMessage;
                 case "selectSalon":
                     String salonId = getDataCallbackQuery(data, 1);
                     Client client = clientService.findByChatId(chatId);
                     client.setSalon(salonService.findById(Long.parseLong(salonId)));
                     clientService.editById(client.getId(), client);
-                    sendMessage = menu(chatId);
-                    return sendMessage;
+                    editMessage = menu(chatId, messageId);
+                    return editMessage;
                 default:
                     // Обработка непредвиденных нажатий
                     break;
@@ -208,13 +217,18 @@ public class MessageClientService {
         return sendMessage;
     }
 
-    public SendMessage myServices(Long chatId) {
-        SendMessage sendMessage = new SendMessage();
+    public EditMessageText myServices(Long chatId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
         sendMessage.setChatId(chatId);
+
+        if (messageId != null) {
+            sendMessage.setMessageId(messageId.intValue());
+        }
+
         Client client = clientService.findByChatId(chatId);
         List<Appointment> appointmentsByClient = appointmentService.getAppointmentsByClient(client);
 
-        StringBuilder messageText = new StringBuilder(":mag_right: Ваши забронированные услуги :mag_right:\n");
+        StringBuilder messageText = new StringBuilder(":mag_right: Ваши забронированные услуги \n\n");
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 messageText
@@ -230,6 +244,13 @@ public class MessageClientService {
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText(convertToEmoji(":x: Отмена записи"));
+        button2.setCallbackData("cancelService");
+        row2.add(button2);
+        keyboard.add(row2);
 
         addMainMenuButton(keyboard);
 
@@ -254,9 +275,14 @@ public class MessageClientService {
         }
     }
 
-    public SendMessage approveBookingService(Long chatId, BookingState state) {
-        SendMessage sendMessage = new SendMessage();
+    public EditMessageText approveBookingService(Long chatId, BookingState state, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
         sendMessage.setChatId(chatId);
+
+        if (messageId != null) {
+            sendMessage.setMessageId(messageId.intValue());
+        }
+
 
         Services service = state.getService();
         Master master = state.getMaster();
@@ -264,7 +290,7 @@ public class MessageClientService {
         WorkTime workTime = state.getWorkTime();
 
         StringBuilder text = new StringBuilder();
-        text.append(":point_down: Подтвердите выбор услуги :point_down:\n")
+        text.append(":point_down: Подтвердите выбор услуги :point_down:\n\n")
                 .append(":bell: ").append(service.getName()).append("\n")
                 .append(":woman_artist: ").append(master.getName()).append("\n")
                 .append(":calendar: ").append(date.toString()).append("\n")
@@ -276,7 +302,7 @@ public class MessageClientService {
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         InlineKeyboardButton approveButton = new InlineKeyboardButton();
-        approveButton.setText(convertToEmoji(":white_check_mark: Подтверждаю :white_check_mark:"));
+        approveButton.setText(convertToEmoji(":white_check_mark: Подтверждаю"));
         approveButton.setCallbackData("approve");
         List<InlineKeyboardButton> approveButtonRow = new ArrayList<>();
         approveButtonRow.add(approveButton);
@@ -290,9 +316,13 @@ public class MessageClientService {
         return sendMessage;
     }
 
-    public SendMessage bookService(Long chatId, BookingState state) {
-        SendMessage sendMessage = new SendMessage();
+    public EditMessageText bookService(Long chatId, BookingState state, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
         sendMessage.setChatId(chatId);
+
+        if (messageId != null) {
+            sendMessage.setMessageId(messageId.intValue());
+        }
 
         Client client = clientService.findByChatId(chatId);
         Salon clientSalon = client.getSalon();
@@ -306,7 +336,7 @@ public class MessageClientService {
 
             for (Services service : allServices) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(convertToEmoji(":fleur_de_lis:" + service.getName() + ":fleur_de_lis:"));
+                button.setText(convertToEmoji(":fleur_de_lis:" + service.getName()));
                 button.setCallbackData("service_" + service.getName());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
@@ -332,7 +362,7 @@ public class MessageClientService {
 
             for (Master master : allMasters) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(convertToEmoji(":star:" + master.getName() + ":star:"));
+                button.setText(convertToEmoji(":star:" + master.getName()));
                 button.setCallbackData("master_" + master.getId());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
@@ -455,23 +485,28 @@ public class MessageClientService {
         return availableDates;
     }
 
-    public SendMessage approveCancel(Long chatId, Long appointmentId) {
-        SendMessage sendMessage = new SendMessage();
+    public EditMessageText approveCancel(Long chatId, Long appointmentId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
         sendMessage.setChatId(chatId);
-        sendMessage.setText(convertToEmoji(":question_mark: Вы действительно хотите отменить услугу :question_mark:\n"));
+
+        if (messageId != null) {
+            sendMessage.setMessageId(messageId.intValue());
+        }
+
+        sendMessage.setText(convertToEmoji(":thinking: Вы действительно хотите отменить услугу :thinking:\n\n"));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         InlineKeyboardButton yesButton = new InlineKeyboardButton();
-        yesButton.setText(convertToEmoji(":white_check_mark: Да :white_check_mark:"));
+        yesButton.setText(convertToEmoji(":white_check_mark: Да"));
         yesButton.setCallbackData("approveCancel_" + appointmentId);
         List<InlineKeyboardButton> yesButtonRow = new ArrayList<>();
         yesButtonRow.add(yesButton);
         keyboard.add(yesButtonRow);
 
         InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText(convertToEmoji(":x: Нет :x:"));
+        backButton.setText(convertToEmoji(":x: Нет"));
         backButton.setCallbackData("menu");
         List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
         backButtonRow.add(backButton);
@@ -483,19 +518,24 @@ public class MessageClientService {
         return sendMessage;
     }
 
-    public SendMessage cancelService(Long chatId) {
-        SendMessage sendMessage = new SendMessage();
+    public EditMessageText cancelService(Long chatId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
         sendMessage.setChatId(chatId);
+
+        if (messageId != null) {
+            sendMessage.setMessageId(messageId.intValue());
+        }
+
         int counter = 1;
 
         Client client = clientService.findByChatId(chatId);
         List<Appointment> appointmentsByClient = appointmentService.getAppointmentsByClient(client);
 
-        StringBuilder messageText = new StringBuilder(convertToEmoji(":spiral_notepad: Ваши забронированные услуги :point_down:\n"));
+        StringBuilder messageText = new StringBuilder(convertToEmoji(":memo: Ваши забронированные услуги :point_down:\n\n"));
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 messageText
-                        .append("Номер: ").append(counter++).append("\n")
+                        .append(":hash: Номер: ").append(counter++).append("\n")
                         .append(":bell: Услуга: " + appointment.getService().getName()).append("\n")
                         .append(":woman_artist: Мастер: " + appointment.getMaster().getName()).append("\n")
                         .append(":calendar: Дата: " + appointment.getAppointmentDate()).append("\n")
@@ -513,7 +553,7 @@ public class MessageClientService {
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(convertToEmoji(":x: Отменить " + counter + " :x:"));
+                button.setText(convertToEmoji(":x: Отменить " + counter));
                 button.setCallbackData("chooseCancel_" + appointment.getId());
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 row.add(button);
@@ -540,42 +580,89 @@ public class MessageClientService {
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton();
-        button1.setText(convertToEmoji(":calendar: Запись на услугу :calendar:"));
+        button1.setText(convertToEmoji(":calendar: Запись на услугу"));
         button1.setCallbackData("bookService");
         row1.add(button1);
         keyboard.add(row1);
 
-        List<InlineKeyboardButton> row2 = new ArrayList<>();
-        InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText(convertToEmoji(":x: Отмена записи :x:"));
-        button2.setCallbackData("cancelService");
-        row2.add(button2);
-        keyboard.add(row2);
-
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText(convertToEmoji(":mag_right: Мои записи :mag_right:"));
+        button.setText(convertToEmoji(":mag_right: Мои записи"));
         button.setCallbackData("myServices");
         row.add(button);
         keyboard.add(row);
 
         List<InlineKeyboardButton> row3 = new ArrayList<>();
         InlineKeyboardButton button3 = new InlineKeyboardButton();
-        button3.setText(convertToEmoji(":office: О салоне :office:"));
+        button3.setText(convertToEmoji(":office: О салоне"));
         button3.setCallbackData("aboutSalon");
         row3.add(button3);
         keyboard.add(row3);
 
         List<InlineKeyboardButton> row4 = new ArrayList<>();
         InlineKeyboardButton button4 = new InlineKeyboardButton();
-        button4.setText(convertToEmoji(":woman_artist: Наши мастера :woman_artist:"));
+        button4.setText(convertToEmoji(":woman_artist: Наши мастера"));
         button4.setCallbackData("ourMasters");
         row4.add(button4);
         keyboard.add(row4);
 
         List<InlineKeyboardButton> row5 = new ArrayList<>();
         InlineKeyboardButton button5 = new InlineKeyboardButton();
-        button5.setText(convertToEmoji(":oncoming_taxi: Добраться до салона :oncoming_taxi:"));
+        button5.setText(convertToEmoji(":oncoming_taxi: Добраться до салона"));
+        button5.setCallbackData("wayToSalon");
+        row5.add(button5);
+        keyboard.add(row5);
+
+        markup.setKeyboard(keyboard);
+        message.setReplyMarkup(markup);
+
+        return message;
+    }
+
+    public EditMessageText menu(Long chatId, Long messageId) {
+        EditMessageText message = new EditMessageText();
+        message.setChatId(chatId);
+
+        if (messageId != null) {
+            message.setMessageId(messageId.intValue());
+        }
+
+        message.setText(convertToEmoji(":point_down: Выберите действие из меню :point_down:"));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText(convertToEmoji(":calendar: Запись на услугу"));
+        button1.setCallbackData("bookService");
+        row1.add(button1);
+        keyboard.add(row1);
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(convertToEmoji(":mag_right: Мои записи"));
+        button.setCallbackData("myServices");
+        row.add(button);
+        keyboard.add(row);
+
+        List<InlineKeyboardButton> row3 = new ArrayList<>();
+        InlineKeyboardButton button3 = new InlineKeyboardButton();
+        button3.setText(convertToEmoji(":office: О салоне"));
+        button3.setCallbackData("aboutSalon");
+        row3.add(button3);
+        keyboard.add(row3);
+
+        List<InlineKeyboardButton> row4 = new ArrayList<>();
+        InlineKeyboardButton button4 = new InlineKeyboardButton();
+        button4.setText(convertToEmoji(":woman_artist: Наши мастера"));
+        button4.setCallbackData("ourMasters");
+        row4.add(button4);
+        keyboard.add(row4);
+
+        List<InlineKeyboardButton> row5 = new ArrayList<>();
+        InlineKeyboardButton button5 = new InlineKeyboardButton();
+        button5.setText(convertToEmoji(":oncoming_taxi: Добраться до салона"));
         button5.setCallbackData("wayToSalon");
         row5.add(button5);
         keyboard.add(row5);
@@ -600,7 +687,12 @@ public class MessageClientService {
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-            addMainMenuButton(keyboard);
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(convertToEmoji(":house_with_garden: Главное меню"));
+            button.setCallbackData("menuSendMessage");
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            row.add(button);
+            keyboard.add(row);
 
             markup.setKeyboard(keyboard);
             sendLocation.setReplyMarkup(markup);
@@ -623,9 +715,35 @@ public class MessageClientService {
         return sendMessage;
     }
 
+    public EditMessageText aboutMasters(Long chatId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
+        sendMessage.setChatId(chatId);
+
+        if (messageId != null) {
+            sendMessage.setMessageId(messageId.intValue());
+        }
+
+        sendMessage.setText("Здесь будет информация о мастрах!");
+
+        return sendMessage;
+    }
+
     public SendMessage aboutSalon(Long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
+        sendMessage.setText("Здесь будет информация о этом салоне!");
+
+        return sendMessage;
+    }
+
+    public EditMessageText aboutSalon(Long chatId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
+        sendMessage.setChatId(chatId);
+
+        if (messageId != null) {
+            sendMessage.setMessageId(messageId.intValue());
+        }
+
         sendMessage.setText("Здесь будет информация о этом салоне!");
 
         return sendMessage;
@@ -664,7 +782,7 @@ public class MessageClientService {
 
     private void addMainMenuButton(List<List<InlineKeyboardButton>> keyboard) {
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText(convertToEmoji(":house_with_garden: Главное меню :house_with_garden:"));
+        button.setText(convertToEmoji(":house_with_garden: Главное меню "));
         button.setCallbackData("menu");
         List<InlineKeyboardButton> row = new ArrayList<>();
         row.add(button);
