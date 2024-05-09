@@ -9,11 +9,11 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 
 @OpenAPIDefinition (
         info = @Info(
-                title = "Garden Shop api",
-                description = "Garden Shop", version = "1.0.0",
+                title = "xtina.studio api",
+                description = "Beauty saloon", version = "1.0.0",
                 contact = @Contact(
-                        name = "Stsiapan Samuliou, Sergei Lapidus, Anton Kuklinski, Viktor Balagurchyk",
-                        url = "https://github.com/s-samuliou/GardenStoreTelran")
+                        name = "Stsiapan Samuliou",
+                        url = "https://github.com/s-samuliou/XtinaStudioTgBot")
 
         )
 )

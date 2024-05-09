@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
@@ -80,9 +81,11 @@ public class MasterBot extends TelegramLongPollingBot {
     }
 
     public BotApiMethod<?> messageReceiver(Update update) {
+        EditMessageText editMessageText = new EditMessageText();
         SendMessage sendMessage = new SendMessage();
         SendLocation sendLocation = new SendLocation();
         Long chatId = null;
+        Long messageId = null;
 
         if (update.hasMessage() && update.getMessage().hasText()) {
             chatId = update.getMessage().getChatId();
@@ -102,12 +105,13 @@ public class MasterBot extends TelegramLongPollingBot {
                     sendLocation = sendSalonLocation(chatId);
                     return sendLocation;
                 default:
-                    if (checkLoginAndPassword(text)) {
+                    if (checkLoginAndPasswordStructure(text)) {
                         String login = splitLoginAndPassword(text, 0);
                         String password = splitLoginAndPassword(text, 1);
 
                         sendMessage = authorizeMaster(chatId, login, password);
                     } else {
+                        sendMessage.setChatId(chatId);
                         sendMessage.setText("Я не знаю такой команды :(\nВызовите главное меню через menu.");
                     }
                     break;
@@ -116,22 +120,26 @@ public class MasterBot extends TelegramLongPollingBot {
             return sendMessage;
         } else if (update.hasCallbackQuery()) {
             chatId = update.getCallbackQuery().getMessage().getChatId();
+            messageId = update.getCallbackQuery().getMessage().getMessageId().longValue();
             String data = update.getCallbackQuery().getData();
             String prefix = getDataCallbackQuery(data, 0);
 
             switch (prefix) {
-                case "menu":
+                case "menuSendMessage":
                     sendMessage = menu(chatId);
                     return sendMessage;
+                case "menu":
+                    editMessageText = menu(chatId, messageId);
+                    return editMessageText;
                 case "myServices":
-                    sendMessage = showBookedServices(chatId);
-                    return sendMessage;
+                    editMessageText = showBookedServices(chatId, messageId);
+                    return editMessageText;
                 case "wayToSalon":
                     sendLocation = sendSalonLocation(chatId);
                     return sendLocation;
                 case "reauthorize":
-                    sendMessage = start(chatId);
-                    return sendMessage;
+                    editMessageText = start(chatId, messageId);
+                    return editMessageText;
                 default:
                     break;
             }
@@ -166,9 +174,68 @@ public class MasterBot extends TelegramLongPollingBot {
         return sendMessage;
     }
 
+    private EditMessageText start(Long chatId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
+        sendMessage.setChatId(chatId);
+        sendMessage.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+
+        if (masterService.existsByChatId(chatId)) {
+            text.append(":fireworks: Вы уже авторизованы! Можете пользоваться ботом!:fireworks:");
+
+            InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+            addMainMenuButton(keyboard);
+
+            markup.setKeyboard(keyboard);
+            sendMessage.setReplyMarkup(markup);
+        } else {
+            text.append(":tada: Добро пожаловать в чат-бот для мастеров!:tada:\n")
+                    .append(":closed_lock_with_key: Введите пожалуйста ваши логин и пароль через пробел (login password) :closed_lock_with_key:");
+        }
+
+        String s = EmojiParser.parseToUnicode(text.toString());
+        sendMessage.setText(s);
+
+        return sendMessage;
+    }
+
     private SendMessage showBookedServices(Long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
+        StringBuilder text = new StringBuilder();
+        text.append(":calendar:").append("Забронированные услуги:").append(":calendar:").append("\n");
+
+        Master master = masterService.findByChatId(chatId);
+        List<Appointment> appointmentsByMaster = appointmentService.getAppointmentsByMaster(master);
+
+        for (Appointment appointment : appointmentsByMaster) {
+            if (appointment.getStatus().equals(AppointmentStatus.BANNED)) {
+                text.append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
+                        .append(":bell:").append("Услуга: ").append(appointment.getService().getName()).append("\n")
+                        .append(":calendar:").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
+                        .append(":calendar:").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n\n");
+            }
+        }
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        String s = EmojiParser.parseToUnicode(text.toString());
+        sendMessage.setText(s);
+        return sendMessage;
+    }
+
+    private EditMessageText showBookedServices(Long chatId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
+        sendMessage.setChatId(chatId);
+        sendMessage.setMessageId(messageId.intValue());
         StringBuilder text = new StringBuilder();
         text.append(":calendar:").append("Забронированные услуги:").append(":calendar:").append("\n");
 
@@ -268,6 +335,37 @@ public class MasterBot extends TelegramLongPollingBot {
         return message;
     }
 
+    private EditMessageText menu(Long chatId, Long messageId) {
+        EditMessageText message = new EditMessageText();
+        message.setChatId(chatId);
+        message.setMessageId(messageId.intValue());
+        message.setText(convertToEmoji(":point_down: Выберите действие из меню :point_down:"));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+
+        button1.setText(convertToEmoji(":mag_right: Посмотреть записи :mag_right:"));
+        button1.setCallbackData("myServices");
+        row1.add(button1);
+        keyboard.add(row1);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText(convertToEmoji(":oncoming_taxi: Добраться до салона :oncoming_taxi:"));
+        button2.setCallbackData("wayToSalon");
+        row2.add(button2);
+        keyboard.add(row2);
+
+
+        markup.setKeyboard(keyboard);
+        message.setReplyMarkup(markup);
+
+        return message;
+    }
+
     public SendLocation sendSalonLocation(Long chatId) {
         SendLocation sendLocation = new SendLocation();
 
@@ -282,7 +380,12 @@ public class MasterBot extends TelegramLongPollingBot {
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-            addMainMenuButton(keyboard);
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(convertToEmoji(":house_with_garden: Главное меню :house_with_garden:"));
+            button.setCallbackData("menuSendMessage");
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            row.add(button);
+            keyboard.add(row);
 
             markup.setKeyboard(keyboard);
             sendLocation.setReplyMarkup(markup);
@@ -372,7 +475,7 @@ public class MasterBot extends TelegramLongPollingBot {
         return address;
     }
 
-    private boolean checkLoginAndPassword(String data) {
+    private boolean checkLoginAndPasswordStructure(String data) {
         String[] parts = data.split(" ");
         return parts.length == 2;
     }

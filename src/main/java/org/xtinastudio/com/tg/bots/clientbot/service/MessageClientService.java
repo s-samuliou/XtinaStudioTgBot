@@ -74,14 +74,19 @@ public class MessageClientService {
                 case "/masters":
                     sendMessage = aboutMasters(chatId);
                     break;
-                case "/salon_location":
-                    sendLocation = sendSalonLocation(chatId);
-                    return sendLocation;
+                case "/reentry_phone_number":
+                    sendMessage = inputPhoneNumberMessage(chatId);
+                    break;
                 case "/change_salon":
                     sendMessage = selectSalon(chatId);
                     break;
                 default:
-                    sendMessage.setText("Я не знаю такой команды :(\nВызовите главное меню через menu.");
+                    if (isValidPhoneNumber(text)) {
+                        sendMessage = inputPhoneNumber(chatId, text);
+                    } else {
+                        sendMessage.setChatId(chatId);
+                        sendMessage.setText("Я не знаю такой команды :(\nВызовите главное меню через menu.");
+                    }
                     break;
             }
 
@@ -100,6 +105,10 @@ public class MessageClientService {
                     return sendMessage;
                 case "menu":
                     editMessage = menu(chatId, messageId);
+                    state = new BookingState();
+                    return editMessage;
+                case "next":
+                    editMessage = selectSalon(chatId, messageId);
                     state = new BookingState();
                     return editMessage;
                 case "wayToSalon":
@@ -178,12 +187,116 @@ public class MessageClientService {
                     clientService.editById(client.getId(), client);
                     editMessage = menu(chatId, messageId);
                     return editMessage;
+                case "selectSalonRegistration":
+                    String salonReg = getDataCallbackQuery(data, 1);
+                    Client clientReg = clientService.findByChatId(chatId);
+                    clientReg.setSalon(salonService.findById(Long.parseLong(salonReg)));
+                    clientService.editById(clientReg.getId(), clientReg);
+                    editMessage = congratulationRegistration(chatId, messageId);
+                    return editMessage;
                 default:
-                    // Обработка непредвиденных нажатий
                     break;
             }
         }
         return null;
+    }
+
+    public EditMessageText congratulationRegistration(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        editMessageText.setText(convertToEmoji(":tada: Поздравляем с успешной регистрацией! :tada: \n" +
+                "Теперь вы часть нашего сообщества. Добро пожаловать!\n" +
+                ":point_down: Чтобы продолжить, воспользуйтесь главным меню :point_down:"));
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        return editMessageText;
+    }
+
+    public SendMessage inputPhoneNumberMessage(Long chatId) {
+        SendMessage editMessageText = new SendMessage();
+        editMessageText.setChatId(chatId);
+
+        Client client = clientService.findByChatId(chatId);
+
+        if (client.getPhoneNumber() == null) {
+            editMessageText.setText(convertToEmoji(":star: Добро пожаловать в чат-бот салона красоты xtina.studio! :star:\n" +
+                    "Сейчас Вам будет нужно пройти небольшую регистрацию, после чего вы сможете полльзоваться ботом!\n" +
+                    ":telephone: Для начала введите свой номер телефона.\n" +
+                    "Без пробелов и тире с помощью клавиатуры (+123456789)\n"));
+        } else {
+            editMessageText.setText(convertToEmoji(":telephone: Введите новый номер телефона.\n" +
+                    "Без пробелов и тире с помощью клавиатуры (+123456789)\n"));
+        }
+
+        return editMessageText;
+    }
+
+    public SendMessage inputPhoneNumber(Long chatId, String phoneNumber) {
+        SendMessage editMessageText = new SendMessage();
+        editMessageText.setChatId(chatId);
+
+        Client client = clientService.findByChatId(chatId);
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        if (client.getPhoneNumber() == null) {
+            client.setPhoneNumber(phoneNumber);
+            clientService.editById(client.getId(), client);
+            editMessageText.setText(convertToEmoji(":star: Отлично! :star:\n" +
+                    ":telephone: Ваш номер телефона сохранён!"));
+
+            addNextButton(keyboard);
+        } else {
+            client.setPhoneNumber(phoneNumber);
+            clientService.editById(client.getId(), client);
+            editMessageText.setText(convertToEmoji(":star: Ваш номер успешно изменён! :star:\n" +
+                    "Можете продолжить пользоваться ботом!"));
+
+            addMainMenuButton(keyboard);
+        }
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        return editMessageText;
+    }
+
+    public EditMessageText selectSalon(Long chatId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
+        sendMessage.setChatId(chatId);
+        sendMessage.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+
+        List<Salon> salons = salonService.getAll();
+
+        text.append(":point_down:").append("Выберите салон для бронирования услуг").append(":point_down:");
+        sendMessage.setText(convertToEmoji(text.toString()));
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        for (Salon salon : salons) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(convertToEmoji(":office:" + salon.getAddress()));
+            button.setCallbackData("selectSalonRegistration_" + salon.getId());
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            row.add(button);
+            keyboard.add(row);
+        }
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        return sendMessage;
     }
 
     public SendMessage selectSalon(Long chatId) {
@@ -193,18 +306,14 @@ public class MessageClientService {
 
         List<Salon> salons = salonService.getAll();
 
-        if (clientService.findByChatId(chatId).getSalon() == null) {
-            text.append(":sparkles:").append("Поздравляем! Вы автоматически зарегестрированы в этом боте!\n");
-        }
-
-        text.append(":point_down:").append("Выберите салон для бронирования услуг").append(":point_down:");
+        text.append(":point_down:").append("Теперь Вам нужно выбрать салон для бронирования услуг").append(":point_down:");
         sendMessage.setText(convertToEmoji(text.toString()));
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         for (Salon salon : salons) {
             InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(salon.getAddress());
+            button.setText(convertToEmoji(":office:" + salon.getAddress()));
             button.setCallbackData("selectSalon_" + salon.getId());
             List<InlineKeyboardButton> row = new ArrayList<>();
             row.add(button);
@@ -763,7 +872,7 @@ public class MessageClientService {
             }
 
             clientService.create(client);
-            sendMessage = selectSalon(update.getMessage().getChatId());
+            sendMessage = inputPhoneNumberMessage(update.getMessage().getChatId());
         } else {
             sendMessage.setText(convertToEmoji(":fireworks: Вы уже зарегестрированы и можете пользоваться ботом! :fireworks:"));
             sendMessage.setChatId(update.getMessage().getChatId());
@@ -789,8 +898,31 @@ public class MessageClientService {
         keyboard.add(row);
     }
 
+    private void addNextButton(List<List<InlineKeyboardButton>> keyboard) {
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(convertToEmoji(convertToEmoji(":arrow_right: Далее ")));
+        button.setCallbackData("next");
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(button);
+        keyboard.add(row);
+    }
+
     private String convertToEmoji(String text) {
         String s = EmojiParser.parseToUnicode(text);
         return s;
+    }
+
+    public boolean isValidPhoneNumber(String phoneNumber) {
+        if (!phoneNumber.startsWith("+")) {
+            return false;
+        }
+
+        String digitsOnly = phoneNumber.substring(1);
+
+        if (!digitsOnly.matches("\\d+")) {
+            return false;
+        }
+
+        return true;
     }
 }
