@@ -278,6 +278,7 @@ public class MasterBot extends TelegramLongPollingBot {
                 sendMessage.setText("Вы успешно вошли в систему!");
                 master.setChatId(chatId);
                 masterService.editById(master.getId(), master);
+                addMainMenuButton(keyboard);
             } else {
                 sendMessage.setText("Пароль введён неверно!");
 

@@ -208,6 +208,10 @@ public class MessageClientService {
     }
 
     private SendMessage instruction(Long chatId) {
+        if (!isAuthorized(chatId)) {
+            return sendNonAuthorizedMessage(chatId);
+        }
+
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         StringBuilder text = new StringBuilder();
@@ -251,10 +255,10 @@ public class MessageClientService {
                         "Вы можете выполнять различные команды напрямую.").append("\n\n")
                 .append(":two: Команды встроенного меню:").append("\n")
                 .append(" :two::one: Команда /start предназначена для регистрации.").append("\n")
-                .append(" :two::two: Команда /меню вызвает главное меню, в котором можно делать/отменять записи и тд.").append("\n")
-                .append(" :two::three: Команда / выдаёт инструкцию, как пользоваться этим ботом").append("\n")
-                .append(" :two::four: Команда / позволяет ввести новый номер телефона, чтобы использовать его вместо старого").append("\n")
-                .append(" :two::five: Команда / позволяет поменять салон для бронирования услуг").append("\n\n")
+                .append(" :two::two: Команда /menu вызвает главное меню, в котором можно делать/отменять записи и тд.").append("\n")
+                .append(" :two::three: Команда /instruction выдаёт инструкцию, как пользоваться этим ботом").append("\n")
+                .append(" :two::four: Команда /reentry_phone_number позволяет ввести новый номер телефона, чтобы использовать его вместо старого").append("\n")
+                .append(" :two::five: Команда /change_salon позволяет поменять салон для бронирования услуг").append("\n\n")
                 .append(":three: Команды главного меню:").append("\n")
                 .append(" :three::one: С помощью 'Запись на услугу' Вы можете записаться на услугу").append("\n")
                 .append(" :three::two: С помощью 'Мои записи' Вы можете просмотреть действующие записи и в случае чего отменить их.").append("\n")
@@ -390,6 +394,10 @@ public class MessageClientService {
     }
 
     public SendMessage inputPhoneNumberMessage(Long chatId) {
+        if (!isAuthorized(chatId)) {
+            return sendNonAuthorizedMessage(chatId);
+        }
+
         SendMessage editMessageText = new SendMessage();
         editMessageText.setChatId(chatId);
 
@@ -468,6 +476,10 @@ public class MessageClientService {
     }
 
     public SendMessage selectSalon(Long chatId) {
+        if (!isAuthorized(chatId)) {
+            return sendNonAuthorizedMessage(chatId);
+        }
+
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         StringBuilder text = new StringBuilder();
@@ -863,6 +875,10 @@ public class MessageClientService {
     }
 
     public SendMessage menu(Long chatId) {
+        if (!isAuthorized(chatId)) {
+            return sendNonAuthorizedMessage(chatId);
+        }
+
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(convertToEmoji(":point_down: Выберите действие из меню :point_down:"));
@@ -1064,5 +1080,17 @@ public class MessageClientService {
         } else {
             return remainingMinutes + "мин";
         }
+    }
+
+    public boolean isAuthorized(Long chatId) {
+        return clientService.existsByChatId(chatId);
+    }
+
+    public SendMessage sendNonAuthorizedMessage(Long chatId) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        sendMessage.setText(convertToEmoji(":warning:Вы не зарегестрированы! Чтобы зарегестрироваться выполните команду /start."));
+
+        return sendMessage;
     }
 }
