@@ -50,6 +50,12 @@ public class MasterReviewServiceImpl implements MasterReviewService {
     }
 
     @Override
+    public double getRatingByMaster(Master master) {
+        MasterReview byMaster = findByMaster(master);
+        return byMaster.getRating();
+    }
+
+    @Override
     public List<MasterReview> getAll() {
         return repository.findAll();
     }

@@ -25,7 +25,7 @@ public class MasterReview {
     private Client client;
 
     @Column(name = "rating")
-    private int rating;
+    private double rating;
 
     @Column(name = "review_date")
     private LocalDateTime reviewDate;

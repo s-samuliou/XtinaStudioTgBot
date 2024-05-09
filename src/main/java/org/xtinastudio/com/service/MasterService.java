@@ -26,5 +26,7 @@ public interface MasterService {
 
     List<Master> getAll();
 
+    List<Master> getAllBySalon(Salon salon);
+
     void delete(Long id);
 }

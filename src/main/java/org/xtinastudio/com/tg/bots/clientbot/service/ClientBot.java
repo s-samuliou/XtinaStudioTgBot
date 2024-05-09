@@ -30,9 +30,7 @@ public class ClientBot extends TelegramLongPollingBot {
         List<BotCommand> commandList = new ArrayList<>();
         commandList.add(new BotCommand("/start", "Начать использовать бот"));
         commandList.add(new BotCommand("/menu", "Главное меню"));
-        commandList.add(new BotCommand("/my_services", "Показать забронированные услуги"));
-        commandList.add(new BotCommand("/about", "Информация о салоне"));
-        commandList.add(new BotCommand("/masters", "Информация о мастерах"));
+        commandList.add(new BotCommand("/instruction", "Инструкция пользования ботом"));
         commandList.add(new BotCommand("/reentry_phone_number", "Ввести новый номер телефона"));
         commandList.add(new BotCommand("/change_salon", "Поменять салон"));
         try {

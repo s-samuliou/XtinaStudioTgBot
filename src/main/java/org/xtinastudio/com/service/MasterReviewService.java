@@ -18,6 +18,8 @@ public interface MasterReviewService {
 
     MasterReview findByMaster(Master master);
 
+    double getRatingByMaster(Master master);
+
     List<MasterReview> getAll();
 
     void delete(Long id);

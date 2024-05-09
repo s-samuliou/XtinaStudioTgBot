@@ -41,6 +41,9 @@ public class MessageClientService {
     private MasterService masterService;
 
     @Autowired
+    private MasterReviewService masterReviewService;
+
+    @Autowired
     private AppointmentService appointmentService;
 
     @Autowired
@@ -68,11 +71,8 @@ public class MessageClientService {
                 case "/menu":
                     sendMessage = menu(chatId);
                     break;
-                case "/about":
-                    sendMessage = aboutSalon(chatId);
-                    break;
-                case "/masters":
-                    sendMessage = aboutMasters(chatId);
+                case "/instruction":
+                    sendMessage = instruction(chatId);
                     break;
                 case "/reentry_phone_number":
                     sendMessage = inputPhoneNumberMessage(chatId);
@@ -194,11 +194,179 @@ public class MessageClientService {
                     clientService.editById(clientReg.getId(), clientReg);
                     editMessage = congratulationRegistration(chatId, messageId);
                     return editMessage;
+                case "navigation":
+                    editMessage = navigation(chatId, messageId);
+                    return editMessage;
+                case "instruction":
+                    editMessage = instruction(chatId, messageId);
+                    return editMessage;
                 default:
                     break;
             }
         }
         return null;
+    }
+
+    private SendMessage instruction(Long chatId) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        StringBuilder text = new StringBuilder();
+
+        text.append(":scroll: Инструкция\n\n")
+                .append(":one: Обратите внимание, что слева внизу от клавиатуры есть встроенное 'menu' c помощью которого " +
+                        "Вы можете выполнять различные команды напрямую.").append("\n\n")
+                .append(":two: Команды встроенного меню:").append("\n")
+                .append(" :two::one: Команда /start предназначена для регистрации.").append("\n")
+                .append(" :two::two: Команда /меню вызвает главное меню, в котором можно делать/отменять записи и тд.").append("\n")
+                .append(" :two::three: Команда / выдаёт инструкцию, как пользоваться этим ботом").append("\n")
+                .append(" :two::four: Команда / позволяет ввести новый номер телефона, чтобы использовать его вместо старого").append("\n")
+                .append(" :two::five: Команда / позволяет поменять салон для бронирования услуг").append("\n\n")
+                .append(":three: Команды главного меню:").append("\n")
+                .append(" :three::one: С помощью 'Запись на услугу' Вы можете записаться на услугу").append("\n")
+                .append(" :three::two: С помощью 'Мои записи' Вы можете просмотреть действующие записи и в случае чего отменить их.").append("\n")
+                .append(" :three::three: В разделе 'Навигация' Вы можете найти информацию о салоне, мастерах и инструкцию").append("\n")
+                .append(" :three::four: С помощью 'Добраться до Салона' Вы можете нажав на карту - проложить путь до салона через навигатор").append("\n");
+
+        sendMessage.setText(convertToEmoji(text.toString()));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        return sendMessage;
+    }
+
+    private EditMessageText instruction(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+
+        text.append(":scroll: Инструкция\n\n")
+                .append(":one: Обратите внимание, что слева внизу от клавиатуры есть встроенное 'menu' c помощью которого " +
+                        "Вы можете выполнять различные команды напрямую.").append("\n\n")
+                .append(":two: Команды встроенного меню:").append("\n")
+                .append(" :two::one: Команда /start предназначена для регистрации.").append("\n")
+                .append(" :two::two: Команда /меню вызвает главное меню, в котором можно делать/отменять записи и тд.").append("\n")
+                .append(" :two::three: Команда / выдаёт инструкцию, как пользоваться этим ботом").append("\n")
+                .append(" :two::four: Команда / позволяет ввести новый номер телефона, чтобы использовать его вместо старого").append("\n")
+                .append(" :two::five: Команда / позволяет поменять салон для бронирования услуг").append("\n\n")
+                .append(":three: Команды главного меню:").append("\n")
+                .append(" :three::one: С помощью 'Запись на услугу' Вы можете записаться на услугу").append("\n")
+                .append(" :three::two: С помощью 'Мои записи' Вы можете просмотреть действующие записи и в случае чего отменить их.").append("\n")
+                .append(" :three::three: В разделе 'Навигация' Вы можете найти информацию о салоне, мастерах и инструкцию").append("\n")
+                .append(" :three::four: С помощью 'Добраться до Салона' Вы можете нажав на карту - проложить путь до салона через навигатор").append("\n");
+
+        editMessageText.setText(convertToEmoji(text.toString()));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        return editMessageText;
+    }
+
+    public EditMessageText aboutMasters(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        StringBuilder text = new StringBuilder();
+
+        if (messageId != null) {
+            editMessageText.setMessageId(messageId.intValue());
+        }
+
+        Client client = clientService.findByChatId(chatId);
+        Salon salon = salonService.findById(client.getSalon().getId());
+        List<Master> masters = masterService.getAllBySalon(salon);
+
+        for (Master master : masters) {
+            text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n")
+                    .append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n")
+                    .append(":link: ").append("Страничка: ").append(master.getUrl()).append("\n")
+                    .append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+        }
+
+        editMessageText.setText(convertToEmoji(text.toString()));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        return editMessageText;
+    }
+
+    public EditMessageText aboutSalon(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+
+        if (messageId != null) {
+            editMessageText.setMessageId(messageId.intValue());
+        }
+
+        Client client = clientService.findByChatId(chatId);
+        Salon salon = salonService.findById(client.getSalon().getId());
+
+        editMessageText.setText(convertToEmoji(salon.getDescription()));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        return editMessageText;
+    }
+
+    private EditMessageText navigation(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        editMessageText.setText(convertToEmoji(":scroll: Это раздел с различной информацией связанной с салоном:"));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row3 = new ArrayList<>();
+        InlineKeyboardButton button3 = new InlineKeyboardButton();
+        button3.setText(convertToEmoji(":office: О салоне"));
+        button3.setCallbackData("aboutSalon");
+        row3.add(button3);
+        keyboard.add(row3);
+
+        List<InlineKeyboardButton> row4 = new ArrayList<>();
+        InlineKeyboardButton button4 = new InlineKeyboardButton();
+        button4.setText(convertToEmoji(":woman_artist: Наши мастера"));
+        button4.setCallbackData("ourMasters");
+        row4.add(button4);
+        keyboard.add(row4);
+
+        List<InlineKeyboardButton> row5 = new ArrayList<>();
+        InlineKeyboardButton button5 = new InlineKeyboardButton();
+        button5.setText(convertToEmoji(":memo: Инструкция"));
+        button5.setCallbackData("instruction");
+        row5.add(button5);
+        keyboard.add(row5);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        return editMessageText;
     }
 
     public EditMessageText congratulationRegistration(Long chatId, Long messageId) {
@@ -345,7 +513,7 @@ public class MessageClientService {
                         .append(":woman_artist: ").append("Мастер: " + appointment.getMaster().getName()).append("\n")
                         .append(":calendar: ").append("Дата: " + appointment.getAppointmentDate()).append("\n")
                         .append(":mantelpiece_clock: ").append("Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
-                        .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append("\n\n");
+                        .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
             }
         }
 
@@ -426,24 +594,31 @@ public class MessageClientService {
     }
 
     public EditMessageText bookService(Long chatId, BookingState state, Long messageId) {
-        EditMessageText sendMessage = new EditMessageText();
-        sendMessage.setChatId(chatId);
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
 
         if (messageId != null) {
-            sendMessage.setMessageId(messageId.intValue());
+            editMessageText.setMessageId(messageId.intValue());
         }
 
         Client client = clientService.findByChatId(chatId);
         Salon clientSalon = client.getSalon();
+        StringBuilder text = new StringBuilder();
 
         if (!state.checkService()) {
-            sendMessage.setText(convertToEmoji(":point_down: Выберите услугу :point_down:\n"));
+            text.append(":point_down: Выберите услугу :point_down:\n\n");
             List<Services> allServices = serviceService.findBySalons(clientSalon);
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             for (Services service : allServices) {
+
+                text.append(":bell: ").append("Название: ").append(service.getName()).append("\n")
+                        .append(":hourglass: ").append("Длительнсть: ").append(convertMinutesToHours(service.getDuration())).append("\n")
+                        .append(":money_with_wings: ").append("Цена: ").append(service.getPrice()).append(" nis\n")
+                        .append(":memo: ").append("Описание: ").append(service.getDescription()).append("\n\n");
+
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":fleur_de_lis:" + service.getName()));
                 button.setCallbackData("service_" + service.getName());
@@ -457,21 +632,27 @@ public class MessageClientService {
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
-            sendMessage.setReplyMarkup(markup);
+            editMessageText.setReplyMarkup(markup);
 
-            return sendMessage;
+            editMessageText.setText(convertToEmoji(text.toString()));
+
+            return editMessageText;
         }
 
         if (!state.checkMaster()) {
-            sendMessage.setText(convertToEmoji(":woman_artist: Выберите мастера :point_down:\n"));
+            text.append(":woman_artist: Выберите мастера :point_down:\n\n");
             List<Master> allMasters = masterService.findByServicesContainingAndSalon(state.getService(), clientSalon);
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             for (Master master : allMasters) {
+                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n")
+                        .append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n")
+                        .append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(convertToEmoji(":star:" + master.getName()));
+                button.setText(convertToEmoji(":star: " + master.getName()));
                 button.setCallbackData("master_" + master.getId());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
@@ -483,13 +664,15 @@ public class MessageClientService {
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
-            sendMessage.setReplyMarkup(markup);
+            editMessageText.setReplyMarkup(markup);
 
-            return sendMessage;
+            editMessageText.setText(convertToEmoji(text.toString()));
+
+            return editMessageText;
         }
 
         if (!state.checkDate()) {
-            sendMessage.setText(convertToEmoji(":calendar: Выберите дату :point_down:\n"));
+            editMessageText.setText(convertToEmoji(":calendar: Выберите дату :point_down:\n"));
             List<LocalDate> allDates = getAvailableDates();
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -511,13 +694,13 @@ public class MessageClientService {
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
-            sendMessage.setReplyMarkup(markup);
+            editMessageText.setReplyMarkup(markup);
 
-            return sendMessage;
+            return editMessageText;
         }
 
         if (!state.checkTime()) {
-            sendMessage.setText(convertToEmoji(":mantelpiece_clock: Выберите время :point_down:\n"));
+            editMessageText.setText(convertToEmoji(":mantelpiece_clock: Выберите время :point_down:\n"));
 
             List<Appointment> appointments = appointmentService.getAppointmentsByDateAndServiceAndMaster(
                     state.getDate(), state.getMaster());
@@ -561,9 +744,9 @@ public class MessageClientService {
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
-            sendMessage.setReplyMarkup(markup);
+            editMessageText.setReplyMarkup(markup);
 
-            return sendMessage;
+            return editMessageText;
         }
 
         return null;
@@ -649,7 +832,7 @@ public class MessageClientService {
                         .append(":woman_artist: Мастер: " + appointment.getMaster().getName()).append("\n")
                         .append(":calendar: Дата: " + appointment.getAppointmentDate()).append("\n")
                         .append(":mantelpiece_clock:: Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
-                        .append(":money_with_wings: Цена: " + appointment.getService().getPrice()).append("\n\n");
+                        .append(":money_with_wings: Цена: " + appointment.getService().getPrice()).append("nis \n\n");
             }
         }
 
@@ -703,17 +886,10 @@ public class MessageClientService {
 
         List<InlineKeyboardButton> row3 = new ArrayList<>();
         InlineKeyboardButton button3 = new InlineKeyboardButton();
-        button3.setText(convertToEmoji(":office: О салоне"));
-        button3.setCallbackData("aboutSalon");
+        button3.setText(convertToEmoji(":scroll: Навигация"));
+        button3.setCallbackData("navigation");
         row3.add(button3);
         keyboard.add(row3);
-
-        List<InlineKeyboardButton> row4 = new ArrayList<>();
-        InlineKeyboardButton button4 = new InlineKeyboardButton();
-        button4.setText(convertToEmoji(":woman_artist: Наши мастера"));
-        button4.setCallbackData("ourMasters");
-        row4.add(button4);
-        keyboard.add(row4);
 
         List<InlineKeyboardButton> row5 = new ArrayList<>();
         InlineKeyboardButton button5 = new InlineKeyboardButton();
@@ -757,17 +933,10 @@ public class MessageClientService {
 
         List<InlineKeyboardButton> row3 = new ArrayList<>();
         InlineKeyboardButton button3 = new InlineKeyboardButton();
-        button3.setText(convertToEmoji(":office: О салоне"));
-        button3.setCallbackData("aboutSalon");
+        button3.setText(convertToEmoji(":scroll: Навигация"));
+        button3.setCallbackData("navigation");
         row3.add(button3);
         keyboard.add(row3);
-
-        List<InlineKeyboardButton> row4 = new ArrayList<>();
-        InlineKeyboardButton button4 = new InlineKeyboardButton();
-        button4.setText(convertToEmoji(":woman_artist: Наши мастера"));
-        button4.setCallbackData("ourMasters");
-        row4.add(button4);
-        keyboard.add(row4);
 
         List<InlineKeyboardButton> row5 = new ArrayList<>();
         InlineKeyboardButton button5 = new InlineKeyboardButton();
@@ -814,48 +983,6 @@ public class MessageClientService {
         String[] parts = data.split("_");
         String address = parts[x];
         return address;
-    }
-
-    public SendMessage aboutMasters(Long chatId) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText("Здесь будет информация о мастрах!");
-
-        return sendMessage;
-    }
-
-    public EditMessageText aboutMasters(Long chatId, Long messageId) {
-        EditMessageText sendMessage = new EditMessageText();
-        sendMessage.setChatId(chatId);
-
-        if (messageId != null) {
-            sendMessage.setMessageId(messageId.intValue());
-        }
-
-        sendMessage.setText("Здесь будет информация о мастрах!");
-
-        return sendMessage;
-    }
-
-    public SendMessage aboutSalon(Long chatId) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText("Здесь будет информация о этом салоне!");
-
-        return sendMessage;
-    }
-
-    public EditMessageText aboutSalon(Long chatId, Long messageId) {
-        EditMessageText sendMessage = new EditMessageText();
-        sendMessage.setChatId(chatId);
-
-        if (messageId != null) {
-            sendMessage.setMessageId(messageId.intValue());
-        }
-
-        sendMessage.setText("Здесь будет информация о этом салоне!");
-
-        return sendMessage;
     }
 
     public SendMessage registerClient(Update update) {
@@ -924,5 +1051,18 @@ public class MessageClientService {
         }
 
         return true;
+    }
+
+    public String convertMinutesToHours(int minutes) {
+        int hours = minutes / 60;
+        int remainingMinutes = minutes % 60;
+
+        if (hours > 0 && remainingMinutes > 0) {
+            return hours + "ч " + remainingMinutes + "мин";
+        } else if (hours > 0) {
+            return hours + "ч";
+        } else {
+            return remainingMinutes + "мин";
+        }
     }
 }

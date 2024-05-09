@@ -27,7 +27,6 @@ public class MasterServiceImpl implements MasterService {
 
         existingMaster.setName(master.getName());
         existingMaster.setChatId(master.getChatId());
-        existingMaster.setLastName(master.getLastName());
         existingMaster.setDescription(master.getDescription());
         existingMaster.setPhotoUrl(master.getPhotoUrl());
         existingMaster.setRole(master.getRole());
@@ -74,6 +73,11 @@ public class MasterServiceImpl implements MasterService {
     @Override
     public List<Master> getAll() {
         return repository.findAll();
+    }
+
+    @Override
+    public List<Master> getAllBySalon(Salon salon) {
+        return repository.getAllBySalon(salon);
     }
 
     @Override

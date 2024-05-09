@@ -21,4 +21,6 @@ public interface MasterJpaRepository extends JpaRepository<Master, Long> {
     boolean existsByChatId(Long chatId);
 
     List<Master> findByServicesContainingAndSalon(Services services, Salon salon);
+
+    List<Master> getAllBySalon(Salon salon);
 }

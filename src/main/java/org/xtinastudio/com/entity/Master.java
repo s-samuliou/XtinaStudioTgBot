@@ -30,8 +30,8 @@ public class Master {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "last_name")
-    private String lastName;
+    @Column(name = "url")
+    private String url;
 
     @Column(name = "description", columnDefinition = "LONGTEXT")
     private String description;

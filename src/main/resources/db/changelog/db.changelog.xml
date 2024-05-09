@@ -46,7 +46,7 @@
             </column>
             <column name="master_id" type="BIGINT"/>
             <column name="client_id" type="BIGINT"/>
-            <column name="rating" type="INT"/>
+            <column name="rating" type="DOUBLE"/>
             <column name="review_date" type="DATETIME"/>
         </createTable>
     </changeSet>
@@ -73,7 +73,7 @@
             <column name="name" type="VARCHAR(255)"/>
             <column name="login" type="VARCHAR(255)"/>
             <column name="password" type="VARCHAR(255)"/>
-            <column name="last_name" type="VARCHAR(255)"/>
+            <column name="url" type="VARCHAR(255)"/>
             <column name="description" type="LONGTEXT"/>
             <column name="photo_url" type="VARCHAR(255)"/>
             <column name="role" type="VARCHAR(255)"/>
@@ -222,7 +222,7 @@
             <column name="name" value="Master 1"/>
             <column name="login" value="admin"/>
             <column name="password" value="admin"/>
-            <column name="last_name" value="admin"/>
+            <column name="url" value="https://www.instagram.com/xtina.studio/"/>
             <column name="description" value="admin"/>
             <column name="photo_url" value="none"/>
             <column name="role" value="MASTER"/>
@@ -234,7 +234,7 @@
             <column name="name" value="Master 2"/>
             <column name="login" value="master"/>
             <column name="password" value="master"/>
-            <column name="last_name" value="Master Last Name"/>
+            <column name="url" value="//MasterUrl"/>
             <column name="description" value="Master Description"/>
             <column name="photo_url" value="https://example.com/master_photo.jpg"/>
             <column name="role" value="MASTER"/>
