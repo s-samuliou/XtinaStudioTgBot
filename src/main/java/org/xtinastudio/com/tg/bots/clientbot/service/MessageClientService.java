@@ -200,6 +200,22 @@ public class MessageClientService {
                 case "instruction":
                     editMessage = instruction(chatId, messageId);
                     return editMessage;
+                case "backToServices":
+                    state.setService(null);
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
+                case "backToMasters":
+                    state.setMaster(null);
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
+                case "backToDate":
+                    state.setDate(null);
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
+                case "backToTime":
+                    state.setWorkTime(null);
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
                 default:
                     break;
             }
@@ -597,6 +613,7 @@ public class MessageClientService {
         approveButtonRow.add(approveButton);
         keyboard.add(approveButtonRow);
 
+        addBackBookStageButton(keyboard, "backToTime");
         addMainMenuButton(keyboard);
 
         markup.setKeyboard(keyboard);
@@ -673,6 +690,8 @@ public class MessageClientService {
                 keyboard.add(row);
             }
 
+
+            addBackBookStageButton(keyboard, "backToServices");
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
@@ -703,6 +722,7 @@ public class MessageClientService {
                 keyboard.add(row);
             }
 
+            addBackBookStageButton(keyboard, "backToMasters");
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
@@ -753,6 +773,7 @@ public class MessageClientService {
                 keyboard.add(row);
             }
 
+            addBackBookStageButton(keyboard, "backToDate");
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
@@ -1036,6 +1057,15 @@ public class MessageClientService {
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText(convertToEmoji(":house_with_garden: Главное меню "));
         button.setCallbackData("menu");
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(button);
+        keyboard.add(row);
+    }
+
+    private void addBackBookStageButton(List<List<InlineKeyboardButton>> keyboard, String buttonName){
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(convertToEmoji(":arrow_left: Назад "));
+        button.setCallbackData(buttonName);
         List<InlineKeyboardButton> row = new ArrayList<>();
         row.add(button);
         keyboard.add(row);
