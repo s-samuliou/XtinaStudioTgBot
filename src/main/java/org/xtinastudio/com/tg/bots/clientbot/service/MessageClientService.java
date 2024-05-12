@@ -588,7 +588,6 @@ public class MessageClientService {
             sendMessage.setMessageId(messageId.intValue());
         }
 
-
         Services service = state.getService();
         Master master = state.getMaster();
         LocalDate date = state.getDate();
@@ -596,10 +595,10 @@ public class MessageClientService {
 
         StringBuilder text = new StringBuilder();
         text.append(":point_down: Подтвердите выбор услуги :point_down:\n\n")
-                .append(":bell: ").append(service.getName()).append("\n")
-                .append(":woman_artist: ").append(master.getName()).append("\n")
-                .append(":calendar: ").append(date.toString()).append("\n")
-                .append(":mantelpiece_clock: ").append(workTime.getDescription());
+                .append(":bell: ").append("Услуга: ").append(service.getName()).append("\n")
+                .append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n")
+                .append(":calendar: ").append("Дата: ").append(date.toString()).append("\n")
+                .append(":mantelpiece_clock: ").append("Время: ").append(workTime.getDescription());
 
         sendMessage.setText(convertToEmoji(text.toString()));
 
@@ -669,6 +668,10 @@ public class MessageClientService {
         }
 
         if (!state.checkMaster()) {
+
+            text.append(":star: Вы выбрали:\n")
+                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n\n");
+
             text.append(":woman_artist: Выберите мастера :point_down:\n\n");
             List<Master> allMasters = masterService.findByServicesContainingAndSalon(state.getService(), clientSalon);
 
@@ -690,7 +693,6 @@ public class MessageClientService {
                 keyboard.add(row);
             }
 
-
             addBackBookStageButton(keyboard, "backToServices");
             addMainMenuButton(keyboard);
 
@@ -703,7 +705,13 @@ public class MessageClientService {
         }
 
         if (!state.checkDate()) {
-            editMessageText.setText(convertToEmoji(":calendar: Выберите дату :point_down:\n"));
+            text.append(":star: Вы выбрали:\n")
+                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n")
+                    .append(":woman_artist: ").append("Мастер: ").append(state.getMaster().getName()).append("\n\n");
+
+            text.append(":calendar: Выберите дату :point_down:\n");
+
+            editMessageText.setText(convertToEmoji(text.toString()));
             List<LocalDate> allDates = getAvailableDates();
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -732,7 +740,14 @@ public class MessageClientService {
         }
 
         if (!state.checkTime()) {
-            editMessageText.setText(convertToEmoji(":mantelpiece_clock: Выберите время :point_down:\n"));
+
+            text.append(":star: Вы выбрали:\n")
+                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n")
+                    .append(":woman_artist: ").append("Мастер: ").append(state.getMaster().getName()).append("\n")
+                    .append(":calendar: ").append("Дата: ").append(state.getDate()).append("\n\n");
+            text.append(":mantelpiece_clock: Выберите время :point_down:\n");
+
+            editMessageText.setText(convertToEmoji(text.toString()));
 
             List<Appointment> appointments = appointmentService.getAppointmentsByDateAndServiceAndMaster(
                     state.getDate(), state.getMaster());
