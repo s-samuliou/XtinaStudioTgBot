@@ -22,7 +22,9 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -571,14 +573,96 @@ public class MessageClientService {
 
     public WorkTime parseWorkTime(String time) {
         switch (time) {
+            case "8:00":
+                return WorkTime.EIGHT;
+            case "8:15":
+                return WorkTime.EIGHT_FIFTEEN;
+            case "8:30":
+                return WorkTime.EIGHT_THIRTY;
+            case "8:45":
+                return WorkTime.EIGHT_FORTY_FIVE;
             case "9:00":
                 return WorkTime.NINE;
+            case "9:15":
+                return WorkTime.NINE_FIFTEEN;
+            case "9:30":
+                return WorkTime.NINE_THIRTY;
+            case "9:45":
+                return WorkTime.NINE_FORTY_FIVE;
             case "10:00":
                 return WorkTime.TEN;
+            case "10:15":
+                return WorkTime.TEN_FIFTEEN;
+            case "10:30":
+                return WorkTime.TEN_THIRTY;
+            case "10:45":
+                return WorkTime.TEN_FORTY_FIVE;
             case "11:00":
                 return WorkTime.ELEVEN;
+            case "11:15":
+                return WorkTime.ELEVEN_FIFTEEN;
+            case "11:30":
+                return WorkTime.ELEVEN_THIRTY;
+            case "11:45":
+                return WorkTime.ELEVEN_FORTY_FIVE;
             case "12:00":
                 return WorkTime.TWELVE;
+            case "12:15":
+                return WorkTime.TWELVE_FIFTEEN;
+            case "12:30":
+                return WorkTime.TWELVE_THIRTY;
+            case "12:45":
+                return WorkTime.TWELVE_FORTY_FIVE;
+            case "13:00":
+                return WorkTime.THIRTEEN;
+            case "13:15":
+                return WorkTime.THIRTEEN_FIFTEEN;
+            case "13:30":
+                return WorkTime.THIRTEEN_THIRTY;
+            case "13:45":
+                return WorkTime.THIRTEEN_FORTY_FIVE;
+            case "14:00":
+                return WorkTime.FOURTEEN;
+            case "14:15":
+                return WorkTime.FOURTEEN_FIFTEEN;
+            case "14:30":
+                return WorkTime.FOURTEEN_THIRTY;
+            case "14:45":
+                return WorkTime.FOURTEEN_FORTY_FIVE;
+            case "15:00":
+                return WorkTime.FIFTEEN;
+            case "15:15":
+                return WorkTime.FIFTEEN_FIFTEEN;
+            case "15:30":
+                return WorkTime.FIFTEEN_THIRTY;
+            case "15:45":
+                return WorkTime.FIFTEEN_FORTY_FIVE;
+            case "16:00":
+                return WorkTime.SIXTEEN;
+            case "16:15":
+                return WorkTime.SIXTEEN_FIFTEEN;
+            case "16:30":
+                return WorkTime.SIXTEEN_THIRTY;
+            case "16:45":
+                return WorkTime.SIXTEEN_FORTY_FIVE;
+            case "17:00":
+                return WorkTime.SEVENTEEN;
+            case "17:15":
+                return WorkTime.SEVENTEEN_FIFTEEN;
+            case "17:30":
+                return WorkTime.SEVENTEEN_THIRTY;
+            case "17:45":
+                return WorkTime.SEVENTEEN_FORTY_FIVE;
+            case "18:00":
+                return WorkTime.EIGHTEEN;
+            case "18:15":
+                return WorkTime.EIGHTEEN_FIFTEEN;
+            case "18:30":
+                return WorkTime.EIGHTEEN_THIRTY;
+            case "18:45":
+                return WorkTime.EIGHTEEN_FORTY_FIVE;
+            case "19:00":
+                return WorkTime.NINETEEN;
             default:
                 throw new IllegalArgumentException("Invalid time format: " + time);
         }
@@ -744,17 +828,18 @@ public class MessageClientService {
         }
 
         if (!state.checkTime()) {
+            int duration = state.getService().getDuration();
+            LocalDate chosenDate = state.getDate();
 
             text.append(":star: Вы выбрали:\n")
                     .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n")
                     .append(":woman_artist: ").append("Мастер: ").append(state.getMaster().getName()).append("\n")
-                    .append(":calendar: ").append("Дата: ").append(state.getDate()).append("\n\n");
+                    .append(":calendar: ").append("Дата: ").append(chosenDate).append("\n\n");
             text.append(":mantelpiece_clock: Выберите время :point_down:\n");
 
             editMessageText.setText(convertToEmoji(text.toString()));
 
-            List<Appointment> appointments = appointmentService.getAppointmentsByDateAndServiceAndMaster(
-                    state.getDate(), state.getMaster());
+            List<Appointment> appointments = appointmentService.getAppointmentsByDateAndMaster(chosenDate, state.getMaster());
 
             LocalDateTime currentDateTime = LocalDateTime.now();
             int currentHour = currentDateTime.getHour();
@@ -765,19 +850,41 @@ public class MessageClientService {
 
             int buttonsInRow = 3;
             List<InlineKeyboardButton> row = new ArrayList<>();
-            for (WorkTime workTime : WorkTime.values()) {
-                int workTimeValue = workTime.ordinal();
 
-                // TODO: Разобраться с тем, чтобы не выводило время которое уже прошло
-                if (!(state.getDate().isEqual(LocalDate.now()) && workTimeValue <= currentHour - 9) /*&& isTimeInPast(workTime, currentHour, currentMinute)*/) {
-                    boolean isTimeOccupied = appointments.stream()
-                            .anyMatch(appointment -> appointment.getAppointmentTime().ordinal() == workTimeValue
-                                    && appointment.getStatus() != AppointmentStatus.CANCELED);
+            // Создадим множество для хранения временных слотов, занятых забронированными услугами
+            Set<Integer> occupiedSlots = new HashSet<>();
 
-                    if (!isTimeOccupied) {
+            // Заполним множество занятыми временными слотами для выбранной даты
+            for (Appointment appointment : appointments) {
+                int startSlot = appointment.getAppointmentTime().ordinal();
+                int endSlot = startSlot + appointment.getService().getDuration() / 15;
+                for (int i = startSlot; i < endSlot; i++) {
+                    occupiedSlots.add(i);
+                }
+            }
+
+            // Пройдемся по временным слотам с шагом, соответствующим длительности услуги
+            for (int i = 0; i < WorkTime.values().length - duration / 15 + 1; i += duration / 15) {
+                int workTimeValue = WorkTime.values()[i].ordinal();
+                boolean isTimeFit = true; // Предполагаем, что время подходит
+
+                // Проверяем, не прошло ли время и не занято ли оно, а также соответствует ли выбранная дата
+                if (!(chosenDate.isEqual(LocalDate.now()) && workTimeValue <= currentHour - 9)) {
+                    // Проверяем, не пересекается ли интервал с уже занятыми временными слотами
+                    for (int j = 0; j < duration / 15; j++) {
+                        int index = i + j;
+                        if (index >= WorkTime.values().length || occupiedSlots.contains(index)) {
+                            isTimeFit = false;
+                            break;
+                        }
+                    }
+
+                    // Если время подходит, добавляем кнопку для выбора
+                    if (isTimeFit) {
                         InlineKeyboardButton button = new InlineKeyboardButton();
-                        button.setText(workTime.getDescription());
-                        button.setCallbackData("time_" + workTime.getDescription());
+                        // Формируем текст кнопки с интервалом времени
+                        button.setText(WorkTime.values()[i].getDescription() + " - " + WorkTime.values()[i + duration / 15].getDescription());
+                        button.setCallbackData("time_" + WorkTime.values()[i].getDescription());
 
                         row.add(button);
 
@@ -803,13 +910,6 @@ public class MessageClientService {
         }
 
         return null;
-    }
-
-    private boolean isTimeInPast(WorkTime workTime, int currentHour, int currentMinute) {
-        int timeHour = workTime.ordinal() / 2 + 10;
-        int timeMinute = workTime.ordinal() % 2 == 0 ? 0 : 30;
-
-        return (currentHour > timeHour || (currentHour == timeHour && currentMinute >= timeMinute + 15));
     }
 
     public List<LocalDate> getAvailableDates() {

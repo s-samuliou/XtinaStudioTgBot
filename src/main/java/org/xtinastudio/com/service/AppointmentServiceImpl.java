@@ -5,12 +5,10 @@ import org.springframework.stereotype.Service;
 import org.xtinastudio.com.entity.Appointment;
 import org.xtinastudio.com.entity.Client;
 import org.xtinastudio.com.entity.Master;
-import org.xtinastudio.com.entity.Services;
 import org.xtinastudio.com.exceptions.AppointmentNotFoundException;
 import org.xtinastudio.com.repository.AppointmentJpaRepository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -41,8 +39,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<Appointment> getAppointmentsByDateAndServiceAndMaster(LocalDate date, Master master) {
-        return repository.getAppointmentsByDateAndServiceAndMaster(date, master);
+    public List<Appointment> getAppointmentsByDateAndMaster(LocalDate date, Master master) {
+        return repository.getAppointmentsByDateAndMaster(date, master);
     }
 
     @Override
