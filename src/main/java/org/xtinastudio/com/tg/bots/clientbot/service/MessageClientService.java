@@ -158,7 +158,9 @@ public class MessageClientService {
                     appointmentService.create(appointment);
                     state = new BookingState();
                     editMessage = menu(chatId, messageId);
-                    masterNotice.sendBookedNoticeToMaster(appointment);
+                    if (appointment.getMaster().getChatId() != null) {
+                        masterNotice.sendBookedNoticeToMaster(appointment);
+                    }
                     return editMessage;
                 case "myServices":
                     editMessage = myServices(chatId, messageId);
@@ -172,7 +174,9 @@ public class MessageClientService {
                     Appointment appointmentById = appointmentService.getById(id);
                     appointmentById.setStatus(AppointmentStatus.CANCELED);
                     appointmentService.editById(id, appointmentById);
-                    masterNotice.sendCanceledNoticeToMaster(appointmentById);
+                    if (appointmentById.getMaster().getChatId() != null) {
+                        masterNotice.sendCanceledNoticeToMaster(appointmentById);
+                    }
                     editMessage = menu(chatId, messageId);
                     return editMessage;
                 case "chooseCancel":
@@ -764,7 +768,8 @@ public class MessageClientService {
             for (WorkTime workTime : WorkTime.values()) {
                 int workTimeValue = workTime.ordinal();
 
-                if (!(state.getDate().isEqual(LocalDate.now()) && workTimeValue <= currentHour - 9) && isTimeInPast(workTime, currentHour, currentMinute)) {
+                // TODO: Разобраться с тем, чтобы не выводило время которое уже прошло
+                if (!(state.getDate().isEqual(LocalDate.now()) && workTimeValue <= currentHour - 9) /*&& isTimeInPast(workTime, currentHour, currentMinute)*/) {
                     boolean isTimeOccupied = appointments.stream()
                             .anyMatch(appointment -> appointment.getAppointmentTime().ordinal() == workTimeValue
                                     && appointment.getStatus() != AppointmentStatus.CANCELED);
