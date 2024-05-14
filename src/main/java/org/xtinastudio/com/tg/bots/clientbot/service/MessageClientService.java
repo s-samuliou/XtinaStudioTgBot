@@ -851,48 +851,16 @@ public class MessageClientService {
             int buttonsInRow = 3;
             List<InlineKeyboardButton> row = new ArrayList<>();
 
-            // Создадим множество для хранения временных слотов, занятых забронированными услугами
-            Set<Integer> occupiedSlots = new HashSet<>();
+            for (int i = 0; i < WorkTime.values().length - duration / 15; i += duration / 15) {
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                button.setText(WorkTime.values()[i].getDescription() + " - " + WorkTime.values()[i + duration / 15].getDescription());
+                button.setCallbackData("time_" + WorkTime.values()[i].getDescription());
 
-            // Заполним множество занятыми временными слотами для выбранной даты
-            for (Appointment appointment : appointments) {
-                int startSlot = appointment.getAppointmentTime().ordinal();
-                int endSlot = startSlot + appointment.getService().getDuration() / 15;
-                for (int i = startSlot; i < endSlot; i++) {
-                    occupiedSlots.add(i);
-                }
-            }
+                row.add(button);
 
-            // Пройдемся по временным слотам с шагом, соответствующим длительности услуги
-            for (int i = 0; i < WorkTime.values().length - duration / 15 + 1; i += duration / 15) {
-                int workTimeValue = WorkTime.values()[i].ordinal();
-                boolean isTimeFit = true; // Предполагаем, что время подходит
-
-                // Проверяем, не прошло ли время и не занято ли оно, а также соответствует ли выбранная дата
-                if (!(chosenDate.isEqual(LocalDate.now()) && workTimeValue <= currentHour - 9)) {
-                    // Проверяем, не пересекается ли интервал с уже занятыми временными слотами
-                    for (int j = 0; j < duration / 15; j++) {
-                        int index = i + j;
-                        if (index >= WorkTime.values().length || occupiedSlots.contains(index)) {
-                            isTimeFit = false;
-                            break;
-                        }
-                    }
-
-                    // Если время подходит, добавляем кнопку для выбора
-                    if (isTimeFit) {
-                        InlineKeyboardButton button = new InlineKeyboardButton();
-                        // Формируем текст кнопки с интервалом времени
-                        button.setText(WorkTime.values()[i].getDescription() + " - " + WorkTime.values()[i + duration / 15].getDescription());
-                        button.setCallbackData("time_" + WorkTime.values()[i].getDescription());
-
-                        row.add(button);
-
-                        if (row.size() == buttonsInRow) {
-                            keyboard.add(row);
-                            row = new ArrayList<>();
-                        }
-                    }
+                if (row.size() == buttonsInRow) {
+                    keyboard.add(row);
+                    row = new ArrayList<>();
                 }
             }
 
