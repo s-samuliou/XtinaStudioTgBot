@@ -21,10 +21,7 @@ import org.xtinastudio.com.tg.bots.masterbot.service.MasterNotice;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -238,20 +235,7 @@ public class MessageClientService {
         sendMessage.setChatId(chatId);
         StringBuilder text = new StringBuilder();
 
-        text.append(":scroll: Инструкция\n\n")
-                .append(":one: Обратите внимание, что слева внизу от клавиатуры есть встроенное 'menu' c помощью которого " +
-                        "Вы можете выполнять различные команды напрямую.").append("\n\n")
-                .append(":two: Команды встроенного меню:").append("\n")
-                .append(" :two::one: Команда /start предназначена для регистрации.").append("\n")
-                .append(" :two::two: Команда /меню вызвает главное меню, в котором можно делать/отменять записи и тд.").append("\n")
-                .append(" :two::three: Команда / выдаёт инструкцию, как пользоваться этим ботом").append("\n")
-                .append(" :two::four: Команда / позволяет ввести новый номер телефона, чтобы использовать его вместо старого").append("\n")
-                .append(" :two::five: Команда / позволяет поменять салон для бронирования услуг").append("\n\n")
-                .append(":three: Команды главного меню:").append("\n")
-                .append(" :three::one: С помощью 'Запись на услугу' Вы можете записаться на услугу").append("\n")
-                .append(" :three::two: С помощью 'Мои записи' Вы можете просмотреть действующие записи и в случае чего отменить их.").append("\n")
-                .append(" :three::three: В разделе 'Навигация' Вы можете найти информацию о салоне, мастерах и инструкцию").append("\n")
-                .append(" :three::four: С помощью 'Добраться до Салона' Вы можете нажав на карту - проложить путь до салона через навигатор").append("\n");
+        text.append(":scroll: Инструкция\n\n").append(":one: Обратите внимание, что слева внизу от клавиатуры есть встроенное 'menu' c помощью которого " + "Вы можете выполнять различные команды напрямую.").append("\n\n").append(":two: Команды встроенного меню:").append("\n").append(" :two::one: Команда /start предназначена для регистрации.").append("\n").append(" :two::two: Команда /меню вызвает главное меню, в котором можно делать/отменять записи и тд.").append("\n").append(" :two::three: Команда / выдаёт инструкцию, как пользоваться этим ботом").append("\n").append(" :two::four: Команда / позволяет ввести новый номер телефона, чтобы использовать его вместо старого").append("\n").append(" :two::five: Команда / позволяет поменять салон для бронирования услуг").append("\n\n").append(":three: Команды главного меню:").append("\n").append(" :three::one: С помощью 'Запись на услугу' Вы можете записаться на услугу").append("\n").append(" :three::two: С помощью 'Мои записи' Вы можете просмотреть действующие записи и в случае чего отменить их.").append("\n").append(" :three::three: В разделе 'Навигация' Вы можете найти информацию о салоне, мастерах и инструкцию").append("\n").append(" :three::four: С помощью 'Добраться до Салона' Вы можете нажав на карту - проложить путь до салона через навигатор").append("\n");
 
         sendMessage.setText(convertToEmoji(text.toString()));
 
@@ -272,20 +256,7 @@ public class MessageClientService {
         editMessageText.setMessageId(messageId.intValue());
         StringBuilder text = new StringBuilder();
 
-        text.append(":scroll: Инструкция\n\n")
-                .append(":one: Обратите внимание, что слева внизу от клавиатуры есть встроенное 'menu' c помощью которого " +
-                        "Вы можете выполнять различные команды напрямую.").append("\n\n")
-                .append(":two: Команды встроенного меню:").append("\n")
-                .append(" :two::one: Команда /start предназначена для регистрации.").append("\n")
-                .append(" :two::two: Команда /menu вызвает главное меню, в котором можно делать/отменять записи и тд.").append("\n")
-                .append(" :two::three: Команда /instruction выдаёт инструкцию, как пользоваться этим ботом").append("\n")
-                .append(" :two::four: Команда /reentry_phone_number позволяет ввести новый номер телефона, чтобы использовать его вместо старого").append("\n")
-                .append(" :two::five: Команда /change_salon позволяет поменять салон для бронирования услуг").append("\n\n")
-                .append(":three: Команды главного меню:").append("\n")
-                .append(" :three::one: С помощью 'Запись на услугу' Вы можете записаться на услугу").append("\n")
-                .append(" :three::two: С помощью 'Мои записи' Вы можете просмотреть действующие записи и в случае чего отменить их.").append("\n")
-                .append(" :three::three: В разделе 'Навигация' Вы можете найти информацию о салоне, мастерах и инструкцию").append("\n")
-                .append(" :three::four: С помощью 'Добраться до Салона' Вы можете нажав на карту - проложить путь до салона через навигатор").append("\n");
+        text.append(":scroll: Инструкция\n\n").append(":one: Обратите внимание, что слева внизу от клавиатуры есть встроенное 'menu' c помощью которого " + "Вы можете выполнять различные команды напрямую.").append("\n\n").append(":two: Команды встроенного меню:").append("\n").append(" :two::one: Команда /start предназначена для регистрации.").append("\n").append(" :two::two: Команда /menu вызвает главное меню, в котором можно делать/отменять записи и тд.").append("\n").append(" :two::three: Команда /instruction выдаёт инструкцию, как пользоваться этим ботом").append("\n").append(" :two::four: Команда /reentry_phone_number позволяет ввести новый номер телефона, чтобы использовать его вместо старого").append("\n").append(" :two::five: Команда /change_salon позволяет поменять салон для бронирования услуг").append("\n\n").append(":three: Команды главного меню:").append("\n").append(" :three::one: С помощью 'Запись на услугу' Вы можете записаться на услугу").append("\n").append(" :three::two: С помощью 'Мои записи' Вы можете просмотреть действующие записи и в случае чего отменить их.").append("\n").append(" :three::three: В разделе 'Навигация' Вы можете найти информацию о салоне, мастерах и инструкцию").append("\n").append(" :three::four: С помощью 'Добраться до Салона' Вы можете нажав на карту - проложить путь до салона через навигатор").append("\n");
 
         editMessageText.setText(convertToEmoji(text.toString()));
 
@@ -314,10 +285,7 @@ public class MessageClientService {
         List<Master> masters = masterService.getAllBySalon(salon);
 
         for (Master master : masters) {
-            text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n")
-                    .append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n")
-                    .append(":link: ").append("Страничка: ").append(master.getUrl()).append("\n")
-                    .append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+            text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n").append(":link: ").append("Страничка: ").append(master.getUrl()).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
         }
 
         editMessageText.setText(convertToEmoji(text.toString()));
@@ -403,9 +371,7 @@ public class MessageClientService {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        editMessageText.setText(convertToEmoji(":tada: Поздравляем с успешной регистрацией! :tada: \n" +
-                "Теперь вы часть нашего сообщества. Добро пожаловать!\n" +
-                ":point_down: Чтобы продолжить, воспользуйтесь главным меню :point_down:"));
+        editMessageText.setText(convertToEmoji(":tada: Поздравляем с успешной регистрацией! :tada: \n" + "Теперь вы часть нашего сообщества. Добро пожаловать!\n" + ":point_down: Чтобы продолжить, воспользуйтесь главным меню :point_down:"));
 
         addMainMenuButton(keyboard);
 
@@ -426,13 +392,9 @@ public class MessageClientService {
         Client client = clientService.findByChatId(chatId);
 
         if (client.getPhoneNumber() == null) {
-            editMessageText.setText(convertToEmoji(":star: Добро пожаловать в чат-бот салона красоты xtina.studio! :star:\n" +
-                    "Сейчас Вам будет нужно пройти небольшую регистрацию, после чего вы сможете полльзоваться ботом!\n" +
-                    ":telephone: Для начала введите свой номер телефона.\n" +
-                    "Без пробелов и тире с помощью клавиатуры (+123456789)\n"));
+            editMessageText.setText(convertToEmoji(":star: Добро пожаловать в чат-бот салона красоты xtina.studio! :star:\n" + "Сейчас Вам будет нужно пройти небольшую регистрацию, после чего вы сможете полльзоваться ботом!\n" + ":telephone: Для начала введите свой номер телефона.\n" + "Без пробелов и тире с помощью клавиатуры (+123456789)\n"));
         } else {
-            editMessageText.setText(convertToEmoji(":telephone: Введите новый номер телефона.\n" +
-                    "Без пробелов и тире с помощью клавиатуры (+123456789)\n"));
+            editMessageText.setText(convertToEmoji(":telephone: Введите новый номер телефона.\n" + "Без пробелов и тире с помощью клавиатуры (+123456789)\n"));
         }
 
         return editMessageText;
@@ -450,15 +412,13 @@ public class MessageClientService {
         if (client.getPhoneNumber() == null) {
             client.setPhoneNumber(phoneNumber);
             clientService.editById(client.getId(), client);
-            editMessageText.setText(convertToEmoji(":star: Отлично! :star:\n" +
-                    ":telephone: Ваш номер телефона сохранён!"));
+            editMessageText.setText(convertToEmoji(":star: Отлично! :star:\n" + ":telephone: Ваш номер телефона сохранён!"));
 
             addNextButton(keyboard);
         } else {
             client.setPhoneNumber(phoneNumber);
             clientService.editById(client.getId(), client);
-            editMessageText.setText(convertToEmoji(":star: Ваш номер успешно изменён! :star:\n" +
-                    "Можете продолжить пользоваться ботом!"));
+            editMessageText.setText(convertToEmoji(":star: Ваш номер успешно изменён! :star:\n" + "Можете продолжить пользоваться ботом!"));
 
             addMainMenuButton(keyboard);
         }
@@ -542,12 +502,7 @@ public class MessageClientService {
         StringBuilder messageText = new StringBuilder(":mag_right: Ваши забронированные услуги \n\n");
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
-                messageText
-                        .append(":bell: ").append("Услуга: " + appointment.getService().getName()).append("\n")
-                        .append(":woman_artist: ").append("Мастер: " + appointment.getMaster().getName()).append("\n")
-                        .append(":calendar: ").append("Дата: " + appointment.getAppointmentDate()).append("\n")
-                        .append(":mantelpiece_clock: ").append("Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
-                        .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
+                messageText.append(":bell: ").append("Услуга: " + appointment.getService().getName()).append("\n").append(":woman_artist: ").append("Мастер: " + appointment.getMaster().getName()).append("\n").append(":calendar: ").append("Дата: " + appointment.getAppointmentDate()).append("\n").append(":mantelpiece_clock: ").append("Время: " + appointment.getAppointmentTime().getDescription()).append("\n").append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
             }
         }
 
@@ -682,11 +637,7 @@ public class MessageClientService {
         WorkTime workTime = state.getWorkTime();
 
         StringBuilder text = new StringBuilder();
-        text.append(":point_down: Подтвердите выбор услуги :point_down:\n\n")
-                .append(":bell: ").append("Услуга: ").append(service.getName()).append("\n")
-                .append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n")
-                .append(":calendar: ").append("Дата: ").append(date.toString()).append("\n")
-                .append(":mantelpiece_clock: ").append("Время: ").append(workTime.getDescription());
+        text.append(":point_down: Подтвердите выбор услуги :point_down:\n\n").append(":bell: ").append("Услуга: ").append(service.getName()).append("\n").append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":calendar: ").append("Дата: ").append(date.toString()).append("\n").append(":mantelpiece_clock: ").append("Время: ").append(workTime.getDescription());
 
         sendMessage.setText(convertToEmoji(text.toString()));
 
@@ -704,7 +655,8 @@ public class MessageClientService {
         addMainMenuButton(keyboard);
 
         markup.setKeyboard(keyboard);
-        sendMessage.setReplyMarkup(markup);;
+        sendMessage.setReplyMarkup(markup);
+        ;
 
         return sendMessage;
     }
@@ -730,10 +682,7 @@ public class MessageClientService {
 
             for (Services service : allServices) {
 
-                text.append(":bell: ").append("Название: ").append(service.getName()).append("\n")
-                        .append(":hourglass: ").append("Длительнсть: ").append(convertMinutesToHours(service.getDuration())).append("\n")
-                        .append(":money_with_wings: ").append("Цена: ").append(service.getPrice()).append(" nis\n")
-                        .append(":memo: ").append("Описание: ").append(service.getDescription()).append("\n\n");
+                text.append(":bell: ").append("Название: ").append(service.getName()).append("\n").append(":hourglass: ").append("Длительнсть: ").append(convertMinutesToHours(service.getDuration())).append("\n").append(":money_with_wings: ").append("Цена: ").append(service.getPrice()).append(" nis\n").append(":memo: ").append("Описание: ").append(service.getDescription()).append("\n\n");
 
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":fleur_de_lis:" + service.getName()));
@@ -757,8 +706,7 @@ public class MessageClientService {
 
         if (!state.checkMaster()) {
 
-            text.append(":star: Вы выбрали:\n")
-                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n\n");
+            text.append(":star: Вы выбрали:\n").append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n\n");
 
             text.append(":woman_artist: Выберите мастера :point_down:\n\n");
             List<Master> allMasters = masterService.findByServicesContainingAndSalon(state.getService(), clientSalon);
@@ -767,9 +715,7 @@ public class MessageClientService {
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             for (Master master : allMasters) {
-                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n")
-                        .append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n")
-                        .append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
 
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":star: " + master.getName()));
@@ -793,9 +739,7 @@ public class MessageClientService {
         }
 
         if (!state.checkDate()) {
-            text.append(":star: Вы выбрали:\n")
-                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n")
-                    .append(":woman_artist: ").append("Мастер: ").append(state.getMaster().getName()).append("\n\n");
+            text.append(":star: Вы выбрали:\n").append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n").append(":woman_artist: ").append("Мастер: ").append(state.getMaster().getName()).append("\n\n");
 
             text.append(":calendar: Выберите дату :point_down:\n");
 
@@ -831,10 +775,7 @@ public class MessageClientService {
             int duration = state.getService().getDuration();
             LocalDate chosenDate = state.getDate();
 
-            text.append(":star: Вы выбрали:\n")
-                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n")
-                    .append(":woman_artist: ").append("Мастер: ").append(state.getMaster().getName()).append("\n")
-                    .append(":calendar: ").append("Дата: ").append(chosenDate).append("\n\n");
+            text.append(":star: Вы выбрали:\n").append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n").append(":woman_artist: ").append("Мастер: ").append(state.getMaster().getName()).append("\n").append(":calendar: ").append("Дата: ").append(chosenDate).append("\n\n");
             text.append(":mantelpiece_clock: Выберите время :point_down:\n");
 
             editMessageText.setText(convertToEmoji(text.toString()));
@@ -851,16 +792,30 @@ public class MessageClientService {
             int buttonsInRow = 3;
             List<InlineKeyboardButton> row = new ArrayList<>();
 
+            HashMap<Integer, Integer> bookedServicePeriods = new HashMap<>();
+
+            for (Appointment appointment : appointments) {
+                if (appointment.getStatus() == AppointmentStatus.BANNED) {
+                    int startDurationService = appointment.getAppointmentTime().ordinal();
+                    int endDurationService = appointment.getService().getDuration() / 15;
+                    bookedServicePeriods.put(startDurationService, endDurationService);
+                }
+            }
+
             for (int i = 0; i < WorkTime.values().length - duration / 15; i += duration / 15) {
-                InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(WorkTime.values()[i].getDescription() + " - " + WorkTime.values()[i + duration / 15].getDescription());
-                button.setCallbackData("time_" + WorkTime.values()[i].getDescription());
+                int bookedTime = WorkTime.values()[i].ordinal();
 
-                row.add(button);
+                if (isNotOccupied(bookedServicePeriods, bookedTime, duration/15)) {
+                    InlineKeyboardButton button = new InlineKeyboardButton();
+                    button.setText(WorkTime.values()[i].getDescription() + " - " + WorkTime.values()[i + duration / 15].getDescription());
+                    button.setCallbackData("time_" + WorkTime.values()[i].getDescription());
 
-                if (row.size() == buttonsInRow) {
-                    keyboard.add(row);
-                    row = new ArrayList<>();
+                    row.add(button);
+
+                    if (row.size() == buttonsInRow) {
+                        keyboard.add(row);
+                        row = new ArrayList<>();
+                    }
                 }
             }
 
@@ -878,6 +833,25 @@ public class MessageClientService {
         }
 
         return null;
+    }
+
+    private boolean isNotOccupied(HashMap<Integer, Integer> bookedServicePeriods, int bookedTime, int duration) {
+        if (bookedServicePeriods.isEmpty()) {
+            return true;
+        }
+
+        int bookedEndTime = bookedTime + duration;
+
+        for (Map.Entry<Integer, Integer> entry : bookedServicePeriods.entrySet()) {
+            int startTime = entry.getKey();
+            int endTime = entry.getValue();
+
+            if (bookedTime < endTime && bookedEndTime > startTime) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public List<LocalDate> getAvailableDates() {
@@ -947,13 +921,7 @@ public class MessageClientService {
         StringBuilder messageText = new StringBuilder(convertToEmoji(":memo: Ваши забронированные услуги :point_down:\n\n"));
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
-                messageText
-                        .append(":hash: Номер: ").append(counter++).append("\n")
-                        .append(":bell: Услуга: " + appointment.getService().getName()).append("\n")
-                        .append(":woman_artist: Мастер: " + appointment.getMaster().getName()).append("\n")
-                        .append(":calendar: Дата: " + appointment.getAppointmentDate()).append("\n")
-                        .append(":mantelpiece_clock:: Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
-                        .append(":money_with_wings: Цена: " + appointment.getService().getPrice()).append("nis \n\n");
+                messageText.append(":hash: Номер: ").append(counter++).append("\n").append(":bell: Услуга: " + appointment.getService().getName()).append("\n").append(":woman_artist: Мастер: " + appointment.getMaster().getName()).append("\n").append(":calendar: Дата: " + appointment.getAppointmentDate()).append("\n").append(":mantelpiece_clock:: Время: " + appointment.getAppointmentTime().getDescription()).append("\n").append(":money_with_wings: Цена: " + appointment.getService().getPrice()).append("nis \n\n");
             }
         }
 
@@ -1150,7 +1118,7 @@ public class MessageClientService {
         keyboard.add(row);
     }
 
-    private void addBackBookStageButton(List<List<InlineKeyboardButton>> keyboard, String buttonName){
+    private void addBackBookStageButton(List<List<InlineKeyboardButton>> keyboard, String buttonName) {
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText(convertToEmoji(":arrow_left: Назад "));
         button.setCallbackData(buttonName);
