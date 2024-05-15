@@ -13,4 +13,6 @@ public interface ServiceJpaRepository extends JpaRepository<Services, Long> {
     Services findByName(String name);
 
     List<Services> findBySalons(Salon salon);
+
+    List<Services> findBySalonsAndKind(Salon salon, String kind);
 }

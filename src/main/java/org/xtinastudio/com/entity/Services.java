@@ -20,6 +20,9 @@ public class Services {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "kind")
+    private String kind;
+
     @Column(name = "description", columnDefinition = "LONGTEXT")
     private String description;
 

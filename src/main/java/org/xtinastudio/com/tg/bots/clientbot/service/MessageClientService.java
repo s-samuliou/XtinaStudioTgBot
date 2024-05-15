@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -99,6 +100,7 @@ public class MessageClientService {
 
             switch (prefix) {
                 case "menuSendMessage":
+                    deleteMessageById(chatId.toString(), messageId.intValue());
                     sendMessage = menu(chatId);
                     state = new BookingState();
                     return sendMessage;
@@ -111,6 +113,7 @@ public class MessageClientService {
                     state = new BookingState();
                     return editMessage;
                 case "wayToSalon":
+                    deleteMessageById(chatId.toString(), messageId.intValue());
                     sendLocation = sendSalonLocation(chatId);
                     return sendLocation;
                 case "bookService":
@@ -121,6 +124,11 @@ public class MessageClientService {
                     return editMessage;
                 case "ourMasters":
                     editMessage = aboutMasters(chatId, messageId);
+                    return editMessage;
+                case "serviceKind":
+                    String serviceKind = getDataCallbackQuery(data, 1);
+                    state.setServiceKind(serviceKind);
+                    editMessage = bookService(chatId, state, messageId);
                     return editMessage;
                 case "service":
                     String service = getDataCallbackQuery(data, 1);
@@ -202,6 +210,10 @@ public class MessageClientService {
                     return editMessage;
                 case "instruction":
                     editMessage = instruction(chatId, messageId);
+                    return editMessage;
+                case "backToServiceKind":
+                    state.setServiceKind(null);
+                    editMessage = bookService(chatId, state, messageId);
                     return editMessage;
                 case "backToServices":
                     state.setService(null);
@@ -673,9 +685,37 @@ public class MessageClientService {
         Salon clientSalon = client.getSalon();
         StringBuilder text = new StringBuilder();
 
-        if (!state.checkService()) {
-            text.append(":point_down: Выберите услугу :point_down:\n\n");
+        if (!state.checkServiceKind()) {
+            text.append("Выберите вид услуги:\n");
             List<Services> allServices = serviceService.findBySalons(clientSalon);
+
+            InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+            for (Services service : allServices) {
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                button.setText(convertToEmoji(":fleur_de_lis:" + service.getKind()));
+                button.setCallbackData("serviceKind_" + service.getKind());
+
+                List<InlineKeyboardButton> row = new ArrayList<>();
+                row.add(button);
+
+                keyboard.add(row);
+            }
+
+            addMainMenuButton(keyboard);
+
+            markup.setKeyboard(keyboard);
+            editMessageText.setReplyMarkup(markup);
+
+            editMessageText.setText(convertToEmoji(text.toString()));
+
+            return editMessageText;
+        }
+
+        if (!state.checkService()) {
+            text.append("Выберите услугу:\n");
+            List<Services> allServices = serviceService.findBySalonsAndKind(clientSalon, state.getServiceKind());
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -694,6 +734,7 @@ public class MessageClientService {
                 keyboard.add(row);
             }
 
+            addBackBookStageButton(keyboard,"backToServiceKind");
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
@@ -1178,5 +1219,9 @@ public class MessageClientService {
         sendMessage.setText(convertToEmoji(":warning:Вы не зарегестрированы! Чтобы зарегестрироваться выполните команду /start."));
 
         return sendMessage;
+    }
+
+    public DeleteMessage deleteMessageById(String chatId, int messageId) {
+        return new DeleteMessage(chatId, messageId);
     }
 }

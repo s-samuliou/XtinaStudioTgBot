@@ -1,6 +1,7 @@
 package org.xtinastudio.com.service;
 
 import org.xtinastudio.com.entity.Salon;
+import org.xtinastudio.com.entity.Services;
 
 import java.util.List;
 

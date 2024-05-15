@@ -39,6 +39,11 @@ public class ServiceServiceImpl implements ServiceService {
     }
 
     @Override
+    public List<Services> findBySalonsAndKind(Salon salon, String kind) {
+        return repository.findBySalonsAndKind(salon, kind);
+    }
+
+    @Override
     public List<Services> getAll() {
         return repository.findAll();
     }

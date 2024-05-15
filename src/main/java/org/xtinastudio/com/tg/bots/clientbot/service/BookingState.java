@@ -13,6 +13,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class BookingState {
 
+    String serviceKind;
+
     Services service;
 
     Master master;
@@ -20,6 +22,13 @@ public class BookingState {
     LocalDate date;
 
     WorkTime workTime;
+
+    boolean checkServiceKind() {
+        if (this.serviceKind == null) {
+            return false;
+        }
+        return true;
+    }
 
     boolean checkService() {
         if (this.service == null) {

@@ -17,6 +17,8 @@ public interface ServiceService {
 
     List<Services> findBySalons(Salon salon);
 
+    List<Services> findBySalonsAndKind(Salon salon, String kind);
+
     List<Services> getAll();
 
     void delete(Long id);
