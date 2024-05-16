@@ -23,6 +23,15 @@ public class BookingState {
 
     WorkTime workTime;
 
+    LocalDate selectMonth = LocalDate.now();
+
+    boolean checkSelectMonth() {
+        if (this.selectMonth == null) {
+            return false;
+        }
+        return true;
+    }
+
     boolean checkServiceKind() {
         if (this.serviceKind == null) {
             return false;

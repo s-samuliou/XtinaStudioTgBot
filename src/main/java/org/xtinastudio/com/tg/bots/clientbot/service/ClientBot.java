@@ -284,6 +284,16 @@ public class ClientBot extends TelegramLongPollingBot {
                 case "backToCalendar":
                     editMessage = bookService(chatId, state, messageId);
                     return editMessage;
+                case "previousMonth":
+                    LocalDate previousMonth = state.getSelectMonth();
+                    state.setSelectMonth(previousMonth.minusMonths(1));
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
+                case "nextMonth":
+                    LocalDate nextMonth = state.getSelectMonth();
+                    state.setSelectMonth(nextMonth.plusMonths(1));
+                    editMessage = bookService(chatId, state, messageId);
+                    return editMessage;
                 default:
                     break;
             }
@@ -874,8 +884,7 @@ public class ClientBot extends TelegramLongPollingBot {
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-            // Create calendar keyboard
-            InlineKeyboardMarkup calendarMarkup = createCalendar("calendar", LocalDate.now(), allDates);
+            InlineKeyboardMarkup calendarMarkup = createCalendar("calendar", state.getSelectMonth(), allDates);
 
             editMessageText.setReplyMarkup(calendarMarkup);
 
