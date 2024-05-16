@@ -23,8 +23,12 @@ import org.xtinastudio.com.service.MasterService;
 import org.xtinastudio.com.service.SalonService;
 import org.xtinastudio.com.tg.properties.MasterBotProperties;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Component
@@ -38,6 +42,8 @@ public class MasterBot extends TelegramLongPollingBot {
 
     @Autowired
     private AppointmentService appointmentService;
+
+    CalendarState calendarState = new CalendarState();
 
     private final MasterBotProperties botProperties;
 
@@ -132,7 +138,35 @@ public class MasterBot extends TelegramLongPollingBot {
                     editMessageText = menu(chatId, messageId);
                     return editMessageText;
                 case "myServices":
-                    editMessageText = showBookedServices(chatId, messageId);
+                    editMessageText = selectServicePeriod(chatId, messageId);
+                    return editMessageText;
+                case "myServicesToday":
+                    LocalDate current = LocalDate.now();
+                    editMessageText = showBookedServices(chatId, messageId, current);
+                    return editMessageText;
+                case "myServicesTomorrow":
+                    LocalDate tomorrow = LocalDate.now().plusDays(1);
+                    editMessageText = showBookedServices(chatId, messageId, tomorrow);
+                    return editMessageText;
+                case "myServicesDate":
+                    LocalDate selectDate = LocalDate.parse(getDataCallbackQuery(data, 1));
+                    editMessageText = showBookedServices(chatId, messageId, selectDate);
+                    return editMessageText;
+                case "myServicesSelectDate":
+                    editMessageText = selectDateByCalendar("myServicesDate", "myServicesPreviousMonth", "myServicesNextMonth", chatId, messageId);
+                    return editMessageText;
+                case "myServicesPreviousMonth":
+                    LocalDate previousMonth = calendarState.getSelectMonth();
+                    calendarState.setSelectMonth(previousMonth.minusMonths(1));
+                    editMessageText = selectDateByCalendar("myServicesDate", "myServicesPreviousMonth", "myServicesNextMonth", chatId, messageId);
+                    return editMessageText;
+                case "myServicesNextMonth":
+                    LocalDate nextMonth = calendarState.getSelectMonth();
+                    calendarState.setSelectMonth(nextMonth.plusMonths(1));
+                    editMessageText = selectDateByCalendar("myServicesDate", "myServicesPreviousMonth", "myServicesNextMonth", chatId, messageId);
+                    return editMessageText;
+                case "myWindows":
+                    editMessageText = selectServicePeriod(chatId, messageId);
                     return editMessageText;
                 case "wayToSalon":
                     sendLocation = sendSalonLocation(chatId);
@@ -146,6 +180,44 @@ public class MasterBot extends TelegramLongPollingBot {
         }
 
         return sendMessage;
+    }
+
+    private EditMessageText selectServicePeriod(Long chatId, Long messageId) {
+        EditMessageText message = new EditMessageText();
+        message.setChatId(chatId);
+        message.setMessageId(messageId.intValue());
+        message.setText(convertToEmoji("Выберите когда хотите посмотреть записи:\n"));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText(convertToEmoji("На сегодня"));
+        button1.setCallbackData("myServicesToday");
+        row1.add(button1);
+        keyboard.add(row1);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText(convertToEmoji("На завтра"));
+        button2.setCallbackData("myServicesTomorrow");
+        row2.add(button2);
+        keyboard.add(row2);
+
+        List<InlineKeyboardButton> row4 = new ArrayList<>();
+        InlineKeyboardButton button4 = new InlineKeyboardButton();
+        button4.setText(convertToEmoji("Выбрать дату"));
+        button4.setCallbackData("myServicesSelectDate");
+        row4.add(button4);
+        keyboard.add(row4);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        message.setReplyMarkup(markup);
+
+        return message;
     }
 
     private SendMessage start(Long chatId) {
@@ -232,15 +304,15 @@ public class MasterBot extends TelegramLongPollingBot {
         return sendMessage;
     }
 
-    private EditMessageText showBookedServices(Long chatId, Long messageId) {
+    private EditMessageText showBookedServices(Long chatId, Long messageId, LocalDate date) {
         EditMessageText sendMessage = new EditMessageText();
         sendMessage.setChatId(chatId);
         sendMessage.setMessageId(messageId.intValue());
         StringBuilder text = new StringBuilder();
-        text.append(":calendar:").append("Забронированные услуги:").append(":calendar:").append("\n");
+        text.append(":calendar:").append("Забронированные услуги:").append("\n");
 
         Master master = masterService.findByChatId(chatId);
-        List<Appointment> appointmentsByMaster = appointmentService.getAppointmentsByMaster(master);
+        List<Appointment> appointmentsByMaster = appointmentService.getAppointmentsByDateAndMaster(date, master);
 
         for (Appointment appointment : appointmentsByMaster) {
             if (appointment.getStatus().equals(AppointmentStatus.BANNED)) {
@@ -316,18 +388,31 @@ public class MasterBot extends TelegramLongPollingBot {
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton();
-
-        button1.setText(convertToEmoji(":mag_right: Посмотреть записи :mag_right:"));
+        button1.setText(convertToEmoji(":mag_right: Посмотреть записи"));
         button1.setCallbackData("myServices");
         row1.add(button1);
         keyboard.add(row1);
 
         List<InlineKeyboardButton> row2 = new ArrayList<>();
         InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText(convertToEmoji(":oncoming_taxi: Добраться до салона :oncoming_taxi:"));
-        button2.setCallbackData("wayToSalon");
+        button2.setText(convertToEmoji(":eyes: Посмотреть окошки"));
+        button2.setCallbackData("myWindows");
         row2.add(button2);
         keyboard.add(row2);
+
+        List<InlineKeyboardButton> row3 = new ArrayList<>();
+        InlineKeyboardButton button3 = new InlineKeyboardButton();
+        button3.setText(convertToEmoji(":wrench: Управление рабочим временем"));
+        button3.setCallbackData("myWorkTime");
+        row3.add(button3);
+        keyboard.add(row3);
+
+        List<InlineKeyboardButton> row4 = new ArrayList<>();
+        InlineKeyboardButton button4 = new InlineKeyboardButton();
+        button4.setText(convertToEmoji(":oncoming_taxi: Добраться до салона"));
+        button4.setCallbackData("wayToSalon");
+        row4.add(button4);
+        keyboard.add(row4);
 
 
         markup.setKeyboard(keyboard);
@@ -340,26 +425,38 @@ public class MasterBot extends TelegramLongPollingBot {
         EditMessageText message = new EditMessageText();
         message.setChatId(chatId);
         message.setMessageId(messageId.intValue());
-        message.setText(convertToEmoji(":point_down: Выберите действие из меню :point_down:"));
+        message.setText(convertToEmoji("Выберите действие из меню:\n"));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton();
-
-        button1.setText(convertToEmoji(":mag_right: Посмотреть записи :mag_right:"));
+        button1.setText(convertToEmoji(":mag_right: Посмотреть записи"));
         button1.setCallbackData("myServices");
         row1.add(button1);
         keyboard.add(row1);
 
         List<InlineKeyboardButton> row2 = new ArrayList<>();
         InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText(convertToEmoji(":oncoming_taxi: Добраться до салона :oncoming_taxi:"));
-        button2.setCallbackData("wayToSalon");
+        button2.setText(convertToEmoji(":eyes: Посмотреть окошки"));
+        button2.setCallbackData("myWindows");
         row2.add(button2);
         keyboard.add(row2);
 
+        List<InlineKeyboardButton> row3 = new ArrayList<>();
+        InlineKeyboardButton button3 = new InlineKeyboardButton();
+        button3.setText(convertToEmoji(":wrench: Управление рабочим временем"));
+        button3.setCallbackData("myWorkTime");
+        row3.add(button3);
+        keyboard.add(row3);
+
+        List<InlineKeyboardButton> row4 = new ArrayList<>();
+        InlineKeyboardButton button4 = new InlineKeyboardButton();
+        button4.setText(convertToEmoji(":oncoming_taxi: Добраться до салона"));
+        button4.setCallbackData("wayToSalon");
+        row4.add(button4);
+        keyboard.add(row4);
 
         markup.setKeyboard(keyboard);
         message.setReplyMarkup(markup);
@@ -479,5 +576,115 @@ public class MasterBot extends TelegramLongPollingBot {
     private boolean checkLoginAndPasswordStructure(String data) {
         String[] parts = data.split(" ");
         return parts.length == 2;
+    }
+
+    private EditMessageText selectDateByCalendar(String name, String prev, String next, Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+
+        editMessageText.setText(convertToEmoji("Выберите дату:\n"));
+        List<LocalDate> allDates = getAvailableDates();
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        InlineKeyboardMarkup calendarMarkup = createCalendar(name, prev, next, calendarState.getSelectMonth(), allDates);
+
+        editMessageText.setReplyMarkup(calendarMarkup);
+        markup.setKeyboard(keyboard);
+
+        return editMessageText;
+    }
+
+    public List<LocalDate> getAvailableDates() {
+        List<LocalDate> availableDates = new ArrayList<>();
+        LocalDate currentDate = LocalDate.now();
+        int daysToAdd = 1;
+
+        availableDates.add(currentDate);
+
+        while (availableDates.size() < 60) {
+            LocalDate nextDate = currentDate.plusDays(daysToAdd);
+            if (nextDate.getDayOfWeek() != DayOfWeek.SATURDAY && nextDate.getDayOfWeek() != DayOfWeek.SUNDAY) {
+                availableDates.add(nextDate);
+            }
+            daysToAdd++;
+        }
+
+        return availableDates;
+    }
+
+    public InlineKeyboardMarkup createCalendar(String name, String prev, String next, LocalDate currentDate, List<LocalDate> availableDates) {
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        int daysInMonth = currentDate.lengthOfMonth();
+
+        int dayOfWeek = currentDate.getDayOfWeek().getValue();
+
+        int dayCounter = 1;
+
+        List<InlineKeyboardButton> headerRow = new ArrayList<>();
+        String monthYearText = currentDate.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault()) + " " + currentDate.getYear();
+        InlineKeyboardButton headerButton = new InlineKeyboardButton();
+        headerButton.setText(monthYearText);
+        headerButton.setCallbackData("backToDate");
+        headerRow.add(headerButton);
+        keyboard.add(headerRow);
+
+        List<InlineKeyboardButton> daysRow = new ArrayList<>();
+        String[] daysOfWeek = {"Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"};
+        for (String day : daysOfWeek) {
+            InlineKeyboardButton dayButton = new InlineKeyboardButton();
+            dayButton.setText(day);
+            dayButton.setCallbackData("backToDate");
+            daysRow.add(dayButton);
+        }
+        keyboard.add(daysRow);
+
+        while (dayCounter <= daysInMonth) {
+            List<InlineKeyboardButton> weekRow = new ArrayList<>();
+            for (int i = 1; i <= 7; i++) {
+                if (i < dayOfWeek || dayCounter > daysInMonth) {
+                    InlineKeyboardButton emptyButton = new InlineKeyboardButton();
+                    emptyButton.setText(" ");
+                    emptyButton.setCallbackData("backToDate");
+                    weekRow.add(emptyButton);
+                } else {
+                    LocalDate currentDateInLoop = LocalDate.of(currentDate.getYear(), currentDate.getMonth(), dayCounter);
+                    InlineKeyboardButton dayButton = new InlineKeyboardButton();
+                    if (availableDates.contains(currentDateInLoop)) {
+                        dayButton.setText(String.valueOf(dayCounter));
+                        dayButton.setCallbackData(name + "_" + currentDateInLoop.toString());
+                    } else {
+                        dayButton.setText(String.valueOf(dayCounter) + "❌");
+                        dayButton.setCallbackData("backToDate");
+                    }
+                    weekRow.add(dayButton);
+                    dayCounter++;
+                }
+            }
+            keyboard.add(weekRow);
+            dayOfWeek = 1;
+        }
+
+        List<InlineKeyboardButton> navRow = new ArrayList<>();
+        InlineKeyboardButton prevButton = new InlineKeyboardButton();
+        prevButton.setText(convertToEmoji(":arrow_backward:"));
+        prevButton.setCallbackData(prev);
+        navRow.add(prevButton);
+        InlineKeyboardButton menuButton = new InlineKeyboardButton();
+        menuButton.setText(convertToEmoji(":house_with_garden: Меню"));
+        menuButton.setCallbackData("menu_");
+        navRow.add(menuButton);
+        InlineKeyboardButton nextButton = new InlineKeyboardButton();
+        nextButton.setText(convertToEmoji(":arrow_forward:"));
+        nextButton.setCallbackData(next);
+        navRow.add(nextButton);
+        keyboard.add(navRow);
+
+        keyboardMarkup.setKeyboard(keyboard);
+        return keyboardMarkup;
     }
 }
