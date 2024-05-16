@@ -757,7 +757,7 @@ public class MasterBot extends TelegramLongPollingBot {
 
         int daysInMonth = currentDate.lengthOfMonth();
 
-        int dayOfWeek = currentDate.getDayOfWeek().getValue();
+        int dayOfWeek = currentDate.withDayOfMonth(1).getDayOfWeek().getValue() % 7 + 1;
 
         int dayCounter = 1;
 

@@ -594,6 +594,7 @@ public class ClientBot extends TelegramLongPollingBot {
                         .append(":calendar: ").append("Дата: " + appointment.getAppointmentDate()).append("\n")
                         .append(":mantelpiece_clock: ").append("Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
                         .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(appointment.getService().getDuration())).append("\n")
+                        .append(":hourglass: ").append("Продолжительность: " + appointment.getStatus()).append("\n")
                         .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
             }
         }
@@ -1320,7 +1321,7 @@ public class ClientBot extends TelegramLongPollingBot {
 
         int daysInMonth = currentDate.lengthOfMonth();
 
-        int dayOfWeek = currentDate.getDayOfWeek().getValue();
+        int dayOfWeek = currentDate.withDayOfMonth(1).getDayOfWeek().getValue() % 7 + 1;
 
         int dayCounter = 1;
 
