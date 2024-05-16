@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.xtinastudio.com.entity.*;
 import org.xtinastudio.com.enums.AppointmentStatus;
 import org.xtinastudio.com.service.AppointmentService;
+import org.xtinastudio.com.service.ClientService;
 import org.xtinastudio.com.service.MasterService;
 import org.xtinastudio.com.service.SalonService;
 import org.xtinastudio.com.tg.properties.MasterBotProperties;
@@ -43,7 +44,12 @@ public class MasterBot extends TelegramLongPollingBot {
     @Autowired
     private AppointmentService appointmentService;
 
+    @Autowired
+    private ClientService clientService;
+
     CalendarState calendarState = new CalendarState();
+
+    RateState rateState = new RateState();
 
     private final MasterBotProperties botProperties;
 
@@ -165,6 +171,29 @@ public class MasterBot extends TelegramLongPollingBot {
                     calendarState.setSelectMonth(nextMonth.plusMonths(1));
                     editMessageText = selectDateByCalendar("myServicesDate", "myServicesPreviousMonth", "myServicesNextMonth", chatId, messageId);
                     return editMessageText;
+                case "myServicesSelectRate":
+                    String selectedServiceRate = getDataCallbackQuery(data, 1);
+                    Appointment appointmentSelectedServiceRate = appointmentService.getById(Long.parseLong(selectedServiceRate));
+                    rateState.setAppointment(appointmentSelectedServiceRate);
+                    editMessageText = menuSelectRate(chatId, messageId);
+                    return editMessageText;
+                case "myServicesSelectRateEndService":
+                    String selectedServiceRateEndService = getDataCallbackQuery(data, 1);
+                    Appointment appointmentSelectedServiceRateEnd = appointmentService.getById(Long.parseLong(selectedServiceRateEndService));
+                    editMessageText = endService(chatId, messageId, appointmentSelectedServiceRateEnd);
+                    return editMessageText;
+                case "myServicesSelectRateCancelService":
+                    String selectedServiceRateCancelService = getDataCallbackQuery(data, 1);
+                    Appointment appointmentSelectedServiceRateCancel = appointmentService.getById(Long.parseLong(selectedServiceRateCancelService));
+                    editMessageText = cancelService(chatId, messageId, appointmentSelectedServiceRateCancel);
+                    return editMessageText;
+                case "myServicesSelectRateEndServiceApprove":
+                    String appointmentId = getDataCallbackQuery(data, 1);
+                    Appointment approve = appointmentService.getById(Long.parseLong(appointmentId));
+                    approve.setStatus(AppointmentStatus.COMPLETED);
+                    appointmentService.editById(approve.getId(), approve);
+                    editMessageText = menu(chatId, messageId);
+                    return editMessageText;
                 case "myWindows":
                     editMessageText = selectServicePeriod(chatId, messageId);
                     return editMessageText;
@@ -179,6 +208,89 @@ public class MasterBot extends TelegramLongPollingBot {
             }
         }
 
+        return sendMessage;
+    }
+
+    private EditMessageText cancelService(Long chatId, Long messageId, Appointment appointmentSelectedServiceRateCancel) {
+        return null;
+    }
+
+    private EditMessageText endService(Long chatId, Long messageId, Appointment appointmentSelectedServiceRateEnd) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+        text.append("Подтвердите завершение процедуры:").append("\n\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText(convertToEmoji(":white_check_mark: Подтверждаю"));
+        button1.setCallbackData("myServicesSelectRateEndServiceApprove_" + appointmentSelectedServiceRateEnd.getId());
+        row1.add(button1);
+        keyboard.add(row1);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText(convertToEmoji(":x: Отмена"));
+        button2.setCallbackData("menu");
+        row2.add(button2);
+        keyboard.add(row2);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        String s = EmojiParser.parseToUnicode(text.toString());
+        editMessageText.setText(s);
+        return editMessageText;
+    }
+
+    private EditMessageText menuSelectRate(Long chatId, Long messageId) {
+        EditMessageText sendMessage = new EditMessageText();
+        sendMessage.setChatId(chatId);
+        sendMessage.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+        text.append("Выберите действие с текущей записью:").append("\n\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        Appointment appointment = rateState.getAppointment();
+
+        text.append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
+                .append(":telephone: ").append("Номер клиента: ").append(appointment.getClient().getPhoneNumber()).append("\n")
+                .append(":cherry_blossom: ").append("Вид услуги:: ").append(appointment.getService().getKind()).append("\n")
+                .append(":bell: ").append("Услуга: ").append(appointment.getService().getName()).append("\n")
+                .append(":calendar: ").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
+                .append(":mantelpiece_clock: ").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n")
+                .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(appointment.getService().getDuration())).append("\n")
+                .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText(convertToEmoji(":white_check_mark: Завершить услугу"));
+        button1.setCallbackData("myServicesSelectRateEndService_" + appointment.getId());
+        row1.add(button1);
+        keyboard.add(row1);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText(convertToEmoji(":x: Отменить услугу"));
+        button2.setCallbackData("myServicesSelectRateCancelService_" + appointment.getId());
+        row2.add(button2);
+        keyboard.add(row2);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        String s = EmojiParser.parseToUnicode(text.toString());
+        sendMessage.setText(s);
         return sendMessage;
     }
 
@@ -309,22 +421,46 @@ public class MasterBot extends TelegramLongPollingBot {
         sendMessage.setChatId(chatId);
         sendMessage.setMessageId(messageId.intValue());
         StringBuilder text = new StringBuilder();
-        text.append(":calendar:").append("Забронированные услуги:").append("\n");
+        text.append(":calendar:").append("Забронированные услуги:").append("\n\n");
 
         Master master = masterService.findByChatId(chatId);
         List<Appointment> appointmentsByMaster = appointmentService.getAppointmentsByDateAndMaster(date, master);
 
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        int counter = 0;
+        List<InlineKeyboardButton> row = new ArrayList<>();
+
         for (Appointment appointment : appointmentsByMaster) {
             if (appointment.getStatus().equals(AppointmentStatus.BANNED)) {
-                text.append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
-                        .append(":bell:").append("Услуга: ").append(appointment.getService().getName()).append("\n")
-                        .append(":calendar:").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
-                        .append(":calendar:").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n\n");
+                text.append(":hash: ").append("Номер ").append(counter+1).append(":\n")
+                        .append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
+                        .append(":telephone: ").append("Номер клиента: ").append(appointment.getClient().getPhoneNumber()).append("\n")
+                        .append(":cherry_blossom: ").append("Вид услуги:: ").append(appointment.getService().getKind()).append("\n")
+                        .append(":bell: ").append("Услуга: ").append(appointment.getService().getName()).append("\n")
+                        .append(":calendar: ").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
+                        .append(":mantelpiece_clock: ").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n")
+                        .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(appointment.getService().getDuration())).append("\n")
+                        .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
+
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                button.setText(convertToEmoji(":hash: Услуга " + (counter + 1)));
+                button.setCallbackData("myServicesSelectRate_" + appointment.getId());
+                row.add(button);
+
+                if (row.size() == 2) {
+                    keyboard.add(row);
+                    row = new ArrayList<>();
+                }
+
+                counter++;
             }
         }
 
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        if (!row.isEmpty()) {
+            keyboard.add(row);
+        }
 
         addMainMenuButton(keyboard);
 
@@ -686,5 +822,18 @@ public class MasterBot extends TelegramLongPollingBot {
 
         keyboardMarkup.setKeyboard(keyboard);
         return keyboardMarkup;
+    }
+
+    public String convertMinutesToHours(int minutes) {
+        int hours = minutes / 60;
+        int remainingMinutes = minutes % 60;
+
+        if (hours > 0 && remainingMinutes > 0) {
+            return hours + "ч " + remainingMinutes + "мин";
+        } else if (hours > 0) {
+            return hours + "ч";
+        } else {
+            return remainingMinutes + "мин";
+        }
     }
 }
