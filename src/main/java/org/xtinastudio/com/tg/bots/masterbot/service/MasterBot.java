@@ -110,9 +110,6 @@ public class MasterBot extends TelegramLongPollingBot {
                 case "/menu":
                     sendMessage = menu(chatId);
                     break;
-                case "/myServices":
-                    sendMessage = showBookedServices(chatId);
-                    break;
                 case "/salon_location":
                     sendLocation = sendSalonLocation(chatId);
                     return sendLocation;
@@ -194,6 +191,13 @@ public class MasterBot extends TelegramLongPollingBot {
                     appointmentService.editById(approve.getId(), approve);
                     editMessageText = menu(chatId, messageId);
                     return editMessageText;
+                case "myServicesSelectRateCancelServiceApprove":
+                    String dataCallbackQuery = getDataCallbackQuery(data, 1);
+                    Appointment cancel = appointmentService.getById(Long.parseLong(dataCallbackQuery));
+                    cancel.setStatus(AppointmentStatus.CANCELED);
+                    appointmentService.editById(cancel.getId(), cancel);
+                    editMessageText = menu(chatId, messageId);
+                    return editMessageText;
                 case "myWindows":
                     editMessageText = selectServicePeriod(chatId, messageId);
                     return editMessageText;
@@ -212,7 +216,37 @@ public class MasterBot extends TelegramLongPollingBot {
     }
 
     private EditMessageText cancelService(Long chatId, Long messageId, Appointment appointmentSelectedServiceRateCancel) {
-        return null;
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+        text.append("Подтвердите отмену процедуры:").append("\n\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText(convertToEmoji(":white_check_mark: Подтверждаю"));
+        button1.setCallbackData("myServicesSelectRateCancelServiceApprove_" + appointmentSelectedServiceRateCancel.getId());
+        row1.add(button1);
+        keyboard.add(row1);
+
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText(convertToEmoji(":x: Отмена"));
+        button2.setCallbackData("menu");
+        row2.add(button2);
+        keyboard.add(row2);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        String s = EmojiParser.parseToUnicode(text.toString());
+        editMessageText.setText(s);
+        return editMessageText;
     }
 
     private EditMessageText endService(Long chatId, Long messageId, Appointment appointmentSelectedServiceRateEnd) {
@@ -385,37 +419,6 @@ public class MasterBot extends TelegramLongPollingBot {
         return sendMessage;
     }
 
-    private SendMessage showBookedServices(Long chatId) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        StringBuilder text = new StringBuilder();
-        text.append(":calendar:").append("Забронированные услуги:").append(":calendar:").append("\n");
-
-        Master master = masterService.findByChatId(chatId);
-        List<Appointment> appointmentsByMaster = appointmentService.getAppointmentsByMaster(master);
-
-        for (Appointment appointment : appointmentsByMaster) {
-            if (appointment.getStatus().equals(AppointmentStatus.BANNED)) {
-                text.append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
-                        .append(":bell:").append("Услуга: ").append(appointment.getService().getName()).append("\n")
-                        .append(":calendar:").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
-                        .append(":calendar:").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n\n");
-            }
-        }
-
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-        addMainMenuButton(keyboard);
-
-        markup.setKeyboard(keyboard);
-        sendMessage.setReplyMarkup(markup);
-
-        String s = EmojiParser.parseToUnicode(text.toString());
-        sendMessage.setText(s);
-        return sendMessage;
-    }
-
     private EditMessageText showBookedServices(Long chatId, Long messageId, LocalDate date) {
         EditMessageText sendMessage = new EditMessageText();
         sendMessage.setChatId(chatId);
@@ -529,13 +532,6 @@ public class MasterBot extends TelegramLongPollingBot {
         row1.add(button1);
         keyboard.add(row1);
 
-        List<InlineKeyboardButton> row2 = new ArrayList<>();
-        InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText(convertToEmoji(":eyes: Посмотреть окошки"));
-        button2.setCallbackData("myWindows");
-        row2.add(button2);
-        keyboard.add(row2);
-
         List<InlineKeyboardButton> row3 = new ArrayList<>();
         InlineKeyboardButton button3 = new InlineKeyboardButton();
         button3.setText(convertToEmoji(":wrench: Управление рабочим временем"));
@@ -572,13 +568,6 @@ public class MasterBot extends TelegramLongPollingBot {
         button1.setCallbackData("myServices");
         row1.add(button1);
         keyboard.add(row1);
-
-        List<InlineKeyboardButton> row2 = new ArrayList<>();
-        InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText(convertToEmoji(":eyes: Посмотреть окошки"));
-        button2.setCallbackData("myWindows");
-        row2.add(button2);
-        keyboard.add(row2);
 
         List<InlineKeyboardButton> row3 = new ArrayList<>();
         InlineKeyboardButton button3 = new InlineKeyboardButton();
