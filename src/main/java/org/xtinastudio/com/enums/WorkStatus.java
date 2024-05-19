@@ -1,10 +1,10 @@
 package org.xtinastudio.com.enums;
 
 public enum WorkStatus {
-    SICK("SICK"),
-    VACATION("VACATION"),
-    DAY_OFF("DAY_OFF"),
-    WORKING("WORKING");
+    SICK("Больничный"),
+    VACATION("Отпуск"),
+    DAY_OFF("Выходной"),
+    WORKING("Работает");
 
     private final String description;
 

@@ -18,15 +18,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.xtinastudio.com.entity.*;
 import org.xtinastudio.com.enums.AppointmentStatus;
-import org.xtinastudio.com.service.AppointmentService;
-import org.xtinastudio.com.service.ClientService;
-import org.xtinastudio.com.service.MasterService;
-import org.xtinastudio.com.service.SalonService;
+import org.xtinastudio.com.enums.WorkStatus;
+import org.xtinastudio.com.enums.WorkTime;
+import org.xtinastudio.com.service.*;
 import org.xtinastudio.com.tg.properties.MasterBotProperties;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -47,9 +47,14 @@ public class MasterBot extends TelegramLongPollingBot {
     @Autowired
     private ClientService clientService;
 
+    @Autowired
+    private ServiceService serviceService;
+
     CalendarState calendarState = new CalendarState();
 
     RateState rateState = new RateState();
+
+    HolidayState holidayState = new HolidayState();
 
     private final MasterBotProperties botProperties;
 
@@ -198,8 +203,64 @@ public class MasterBot extends TelegramLongPollingBot {
                     appointmentService.editById(cancel.getId(), cancel);
                     editMessageText = menu(chatId, messageId);
                     return editMessageText;
-                case "myWindows":
-                    editMessageText = selectServicePeriod(chatId, messageId);
+                case "myWorkTime":
+                    editMessageText = managementWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeStatus":
+                    String myWorkTimeStatusData = getDataCallbackQuery(data, 1);
+                    WorkStatus workStatus = WorkStatus.valueOf(myWorkTimeStatusData);
+                    holidayState.setWorkStatus(workStatus);
+                    editMessageText = managementWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeStartDate":
+                    LocalDate myWorkTimeStartDate = LocalDate.parse(getDataCallbackQuery(data, 1));
+                    holidayState.setStartDate(myWorkTimeStartDate);
+                    editMessageText = managementWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeStartDatePrev":
+                    LocalDate myWorkTimeStartDatePrev = calendarState.getSelectMonth();
+                    calendarState.setSelectMonth(myWorkTimeStartDatePrev.minusMonths(1));
+                    editMessageText = managementWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeStartDateNext":
+                    LocalDate myWorkTimeStartDateNext = calendarState.getSelectMonth();
+                    calendarState.setSelectMonth(myWorkTimeStartDateNext.plusMonths(1));
+                    editMessageText = managementWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeEndDate":
+                    LocalDate myWorkTimeEndDate = LocalDate.parse(getDataCallbackQuery(data, 1));
+                    holidayState.setEndDate(myWorkTimeEndDate);
+                    editMessageText = managementWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeEndDatePrev":
+                    LocalDate myWorkTimeEndDatePrev = calendarState.getSelectMonth();
+                    calendarState.setSelectMonth(myWorkTimeEndDatePrev.minusMonths(1));
+                    editMessageText = managementWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeEndDateNext":
+                    LocalDate myWorkTimeEndDateNext = calendarState.getSelectMonth();
+                    calendarState.setSelectMonth(myWorkTimeEndDateNext.plusMonths(1));
+                    editMessageText = managementWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeStatusApprove":
+                    long between = ChronoUnit.DAYS.between(holidayState.startDate, holidayState.endDate);
+                    if (between > 0) {
+                        LocalDate date = holidayState.startDate;
+                        for (int i = 0; i <= between; i++) {
+                            Appointment appointment = new Appointment();
+                            appointment.setAppointmentDate(date);
+                            appointment.setStatus(AppointmentStatus.BANNED);
+                            appointment.setAppointmentTime(WorkTime.EIGHT);
+                            appointment.setMaster(masterService.findByChatId(chatId));
+                            appointment.setService(serviceService.findByName("holiday"));
+
+                            date = date.plusDays(1);
+                            appointmentService.create(appointment);
+                        }
+
+                        holidayState = null;
+                    }
+                    editMessageText = menu(chatId, messageId);
                     return editMessageText;
                 case "wayToSalon":
                     sendLocation = sendSalonLocation(chatId);
@@ -213,6 +274,88 @@ public class MasterBot extends TelegramLongPollingBot {
         }
 
         return sendMessage;
+    }
+
+    private EditMessageText managementWorkTime(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        if (!holidayState.checkWorkStatus()) {
+            text.append("Выберите тип выходного:").append("\n\n");
+
+            for (WorkStatus status : WorkStatus.values()) {
+                if (status != WorkStatus.WORKING) {
+                    List<InlineKeyboardButton> row = new ArrayList<>();
+                    InlineKeyboardButton button = new InlineKeyboardButton();
+                    button.setText(status.getDescription());
+                    button.setCallbackData("myWorkTimeStatus_" + status.name());
+                    row.add(button);
+                    keyboard.add(row);
+                }
+            }
+
+            addMainMenuButton(keyboard);
+
+            markup.setKeyboard(keyboard);
+            editMessageText.setReplyMarkup(markup);
+
+            editMessageText.setText(convertToEmoji(text.toString()));
+            return editMessageText;
+        }
+
+        if (!holidayState.checkStartDate()) {
+            text.append("Выберите дату начала выходного:").append("\n")
+                    .append("(Если Вы хотите сделать 1 выходной, то выбранные Вами даты начала и конца должны совпадать)").append("\n\n");
+
+            editMessageText = selectDateByCalendar("myWorkTimeStartDate", "myWorkTimeStartDatePrev", "myWorkTimeStartDateNext", chatId, messageId);
+            editMessageText.setText(convertToEmoji(text.toString()));
+            return editMessageText;
+        }
+
+        if (!holidayState.checkEndDate()) {
+            text.append("Выберите дату окончания выходного:").append("\n\n");
+
+            editMessageText = selectDateByCalendar("myWorkTimeEndDate", "myWorkTimeEndDatePrev", "myWorkTimeEndDateNext", chatId, messageId);
+            editMessageText.setText(convertToEmoji(text.toString()));
+            return editMessageText;
+        }
+
+        if (!holidayState.checkApprove()) {
+            text.append("Подтвердите Ваш выбор:").append("\n")
+                    .append("Статус: ").append(holidayState.workStatus.getDescription()).append("\n")
+                    .append("Дата начала: ").append(holidayState.startDate).append("\n")
+                    .append("Дата конца: ").append(holidayState.endDate).append("\n\n");
+
+
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(convertToEmoji("Подтверждаю"));
+            button.setCallbackData("myWorkTimeStatusApprove_");
+            row.add(button);
+            keyboard.add(row);
+
+            List<InlineKeyboardButton> row1 = new ArrayList<>();
+            InlineKeyboardButton button2 = new InlineKeyboardButton();
+            button2.setText(convertToEmoji(":x: Отмена"));
+            button2.setCallbackData("menu");
+            row1.add(button2);
+            keyboard.add(row1);
+
+            addMainMenuButton(keyboard);
+
+            markup.setKeyboard(keyboard);
+            editMessageText.setReplyMarkup(markup);
+
+            editMessageText.setText(convertToEmoji(text.toString()));
+            return editMessageText;
+        }
+
+        return null;
     }
 
     private EditMessageText cancelService(Long chatId, Long messageId, Appointment appointmentSelectedServiceRateCancel) {

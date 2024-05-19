@@ -20,6 +20,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.xtinastudio.com.entity.*;
 import org.xtinastudio.com.enums.AppointmentStatus;
 import org.xtinastudio.com.enums.Language;
+import org.xtinastudio.com.enums.WorkStatus;
 import org.xtinastudio.com.enums.WorkTime;
 import org.xtinastudio.com.service.*;
 import org.xtinastudio.com.tg.bots.masterbot.service.MasterNotice;
@@ -788,7 +789,9 @@ public class ClientBot extends TelegramLongPollingBot {
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 row.add(button);
 
-                keyboard.add(row);
+                if (!service.getKind().equals("holiday")) {
+                    keyboard.add(row);
+                }
             }
 
             addMainMenuButton(keyboard);
@@ -819,6 +822,7 @@ public class ClientBot extends TelegramLongPollingBot {
                 button.setCallbackData("service_" + service.getName());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
+
                 row.add(button);
 
                 keyboard.add(row);
@@ -836,7 +840,6 @@ public class ClientBot extends TelegramLongPollingBot {
         }
 
         if (!state.checkMaster()) {
-
             text.append("Вы выбрали:\n")
                     .append(":cherry_blossom: ").append("Вид услуги: ").append(state.getServiceKind()).append("\n")
                     .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n\n");
@@ -848,14 +851,17 @@ public class ClientBot extends TelegramLongPollingBot {
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             for (Master master : allMasters) {
-                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":scroll: ").append("Статус: ").append(master.getWorkStatus().getDescription()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
 
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":star: " + master.getName()));
                 button.setCallbackData("master_" + master.getId());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
-                row.add(button);
+
+                if (master.getWorkStatus() == WorkStatus.WORKING) {
+                    row.add(button);
+                }
 
                 keyboard.add(row);
             }
@@ -881,9 +887,6 @@ public class ClientBot extends TelegramLongPollingBot {
 
             editMessageText.setText(convertToEmoji(text.toString()));
             List<LocalDate> allDates = getAvailableDates();
-
-            InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-            List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             InlineKeyboardMarkup calendarMarkup = createCalendar("calendar", state.getSelectMonth(), allDates);
 
