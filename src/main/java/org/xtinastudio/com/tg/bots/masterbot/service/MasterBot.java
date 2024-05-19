@@ -441,18 +441,14 @@ public class MasterBot extends TelegramLongPollingBot {
 
         Appointment appointment = rateState.getAppointment();
 
-        if (appointment.getWorkStatus() == null) {
-            text.append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
-                    .append(":telephone: ").append("Номер клиента: ").append(appointment.getClient().getPhoneNumber()).append("\n")
-                    .append(":cherry_blossom: ").append("Вид услуги:: ").append(appointment.getService().getKind()).append("\n")
-                    .append(":bell: ").append("Услуга: ").append(appointment.getService().getName()).append("\n")
-                    .append(":calendar: ").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
-                    .append(":mantelpiece_clock: ").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n")
-                    .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(appointment.getService().getDuration())).append("\n")
-                    .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
-        } else {
-            text.append("У Вас сегодня '").append(appointment.getWorkStatus().getDescription()).append("'\n");
-        }
+        text.append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
+                .append(":telephone: ").append("Номер клиента: ").append(appointment.getClient().getPhoneNumber()).append("\n")
+                .append(":cherry_blossom: ").append("Вид услуги:: ").append(appointment.getService().getKind()).append("\n")
+                .append(":bell: ").append("Услуга: ").append(appointment.getService().getName()).append("\n")
+                .append(":calendar: ").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
+                .append(":mantelpiece_clock: ").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n")
+                .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(appointment.getService().getDuration())).append("\n")
+                .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton();
@@ -857,6 +853,7 @@ public class MasterBot extends TelegramLongPollingBot {
         EditMessageText editMessageText = new EditMessageText();
         editMessageText.setChatId(chatId);
         editMessageText.setMessageId(messageId.intValue());
+        Master master = masterService.findByChatId(chatId);
 
         editMessageText.setText(convertToEmoji("Выберите дату:\n"));
         List<LocalDate> allDates = getAvailableDates(400);
@@ -864,7 +861,7 @@ public class MasterBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        InlineKeyboardMarkup calendarMarkup = createCalendar(masterService.findByChatId(chatId), name, prev, next, calendarState.getSelectMonth(), allDates);
+        InlineKeyboardMarkup calendarMarkup = createCalendar(master, name, prev, next, calendarState.getSelectMonth(), allDates);
 
         editMessageText.setReplyMarkup(calendarMarkup);
         markup.setKeyboard(keyboard);
@@ -941,18 +938,18 @@ public class MasterBot extends TelegramLongPollingBot {
                         List<Appointment> appointmentsByDateAndMaster = appointmentService.getAppointmentsByDateAndMaster(currentDateInLoop, master);
 
                         dayButton.setText(String.valueOf(dayCounter));
-                        dayButton.setCallbackData("date_" + currentDateInLoop.toString());
+                        dayButton.setCallbackData(name + "_" + currentDateInLoop.toString());
 
                         if (!appointmentsByDateAndMaster.isEmpty()) {
                             if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.SICK) {
                                 dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":hospital:"));
-                                dayButton.setCallbackData("date_" + currentDateInLoop.toString());
+                                dayButton.setCallbackData(name + "_" + currentDateInLoop.toString());
                             } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.VACATION) {
                                 dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":airplane:"));
-                                dayButton.setCallbackData("date_" + currentDateInLoop.toString());
+                                dayButton.setCallbackData(name + "_" + currentDateInLoop.toString());
                             } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.DAY_OFF) {
                                 dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":palm_tree:"));
-                                dayButton.setCallbackData("date_" + currentDateInLoop.toString());
+                                dayButton.setCallbackData(name + "_" + currentDateInLoop.toString());
                             }
                         }
                     } else {
