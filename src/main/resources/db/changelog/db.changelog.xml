@@ -17,6 +17,7 @@
             <column name="appointment_date" type="DATE"/>
             <column name="appointment_time" type="SMALLINT"/>
             <column name="status" type="VARCHAR(255)"/>
+            <column name="work_status" type="VARCHAR(255)"/>
             <column name="client_id" type="BIGINT"/>
             <column name="master_id" type="BIGINT"/>
             <column name="service_id" type="BIGINT"/>

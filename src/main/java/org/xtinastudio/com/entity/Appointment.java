@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.xtinastudio.com.enums.AppointmentStatus;
+import org.xtinastudio.com.enums.WorkStatus;
 import org.xtinastudio.com.enums.WorkTime;
 
 import java.time.LocalDate;
@@ -28,6 +29,10 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private AppointmentStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "work_status")
+    private WorkStatus workStatus;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "client_id")

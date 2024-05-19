@@ -858,10 +858,7 @@ public class ClientBot extends TelegramLongPollingBot {
                 button.setCallbackData("master_" + master.getId());
 
                 List<InlineKeyboardButton> row = new ArrayList<>();
-
-                if (master.getWorkStatus() == WorkStatus.WORKING) {
-                    row.add(button);
-                }
+                row.add(button);
 
                 keyboard.add(row);
             }
@@ -886,9 +883,9 @@ public class ClientBot extends TelegramLongPollingBot {
             text.append("Выберите дату:\n");
 
             editMessageText.setText(convertToEmoji(text.toString()));
-            List<LocalDate> allDates = getAvailableDates();
+            List<LocalDate> allDates = getAvailableDates(60);
 
-            InlineKeyboardMarkup calendarMarkup = createCalendar("calendar", state.getSelectMonth(), allDates);
+            InlineKeyboardMarkup calendarMarkup = createCalendar(state.getMaster(), state.getSelectMonth(), allDates);
 
             editMessageText.setReplyMarkup(calendarMarkup);
 
@@ -982,14 +979,24 @@ public class ClientBot extends TelegramLongPollingBot {
         return true;
     }
 
-    public List<LocalDate> getAvailableDates() {
+    public List<LocalDate> getAvailableDates(int days) {
         List<LocalDate> availableDates = new ArrayList<>();
         LocalDate currentDate = LocalDate.now();
-        int daysToAdd = 1;
+
+        if (currentDate.getDayOfWeek() == DayOfWeek.SATURDAY || currentDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            currentDate = currentDate.plusDays(1);
+        }
+
+        while (currentDate.getDayOfWeek() == DayOfWeek.SATURDAY || currentDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            currentDate = currentDate.plusDays(1);
+        }
 
         availableDates.add(currentDate);
 
-        while (availableDates.size() < 60) {
+        int daysToAdd = 1;
+
+        // Заполнение списка дат
+        while (availableDates.size() < days) {
             LocalDate nextDate = currentDate.plusDays(daysToAdd);
             if (nextDate.getDayOfWeek() != DayOfWeek.SATURDAY && nextDate.getDayOfWeek() != DayOfWeek.SUNDAY) {
                 availableDates.add(nextDate);
@@ -1318,14 +1325,12 @@ public class ClientBot extends TelegramLongPollingBot {
         }
     }
 
-    public InlineKeyboardMarkup createCalendar(String name, LocalDate currentDate, List<LocalDate> availableDates) {
+    public InlineKeyboardMarkup createCalendar(Master master, LocalDate currentDate, List<LocalDate> availableDates) {
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         int daysInMonth = currentDate.lengthOfMonth();
-
         int dayOfWeek = currentDate.withDayOfMonth(1).getDayOfWeek().getValue() % 7 + 1;
-
         int dayCounter = 1;
 
         List<InlineKeyboardButton> headerRow = new ArrayList<>();
@@ -1358,8 +1363,23 @@ public class ClientBot extends TelegramLongPollingBot {
                     LocalDate currentDateInLoop = LocalDate.of(currentDate.getYear(), currentDate.getMonth(), dayCounter);
                     InlineKeyboardButton dayButton = new InlineKeyboardButton();
                     if (availableDates.contains(currentDateInLoop)) {
+                        List<Appointment> appointmentsByDateAndMaster = appointmentService.getAppointmentsByDateAndMaster(currentDateInLoop, master);
+
                         dayButton.setText(String.valueOf(dayCounter));
                         dayButton.setCallbackData("date_" + currentDateInLoop.toString());
+
+                        if (!appointmentsByDateAndMaster.isEmpty()) {
+                            if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.SICK) {
+                                dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":hospital:"));
+                                dayButton.setCallbackData("backToDate");
+                            } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.VACATION) {
+                                dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":airplane:"));
+                                dayButton.setCallbackData("backToDate");
+                            } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.DAY_OFF) {
+                                dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":palm_tree:"));
+                                dayButton.setCallbackData("backToDate");
+                            }
+                        }
                     } else {
                         dayButton.setText(String.valueOf(dayCounter) + "❌");
                         dayButton.setCallbackData("backToDate");
