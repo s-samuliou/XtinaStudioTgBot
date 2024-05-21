@@ -295,6 +295,9 @@ public class ClientBot extends TelegramLongPollingBot {
                     state.setSelectMonth(nextMonth.plusMonths(1));
                     editMessage = bookService(chatId, state, messageId);
                     return editMessage;
+                case "rating":
+                    int checkRating = Integer.parseInt(getDataCallbackQuery(data, 1));
+
                 default:
                     break;
             }
@@ -1413,5 +1416,58 @@ public class ClientBot extends TelegramLongPollingBot {
 
         keyboardMarkup.setKeyboard(keyboard);
         return keyboardMarkup;
+    }
+
+    public SendMessage sendCheckRating(Appointment appointment) {
+        SendMessage sendMessage = new SendMessage();
+        StringBuilder text = new StringBuilder();
+
+        Master master = appointment.getMaster();
+        Services service = appointment.getService();
+        Client client = appointment.getClient();
+
+        text.append("Поставьте оценку мастеру '").append(master.getName()).append("' за проделанную процедуру '").append(service.getName()).append("':\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(convertToEmoji(String.valueOf(i) + " :star:"));
+            button.setCallbackData("rating_" + i);
+            if (i <= 3) {
+                row1.add(button);
+            } else {
+                row2.add(button);
+            }
+        }
+
+        keyboard.add(row1);
+        keyboard.add(row2);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        sendMessage.setChatId(client.getChatId());
+        sendMessage.setText(convertToEmoji(text.toString()));
+
+        return sendMessage;
+    }
+
+    public EditMessageText approveCheckRating(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+
+        StringBuilder text = new StringBuilder();
+
+
+
+        editMessageText.setText(convertToEmoji(text.toString()));
+        return editMessageText;
     }
 }

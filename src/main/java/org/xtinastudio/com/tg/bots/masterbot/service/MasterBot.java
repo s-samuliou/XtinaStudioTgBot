@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -245,8 +246,9 @@ public class MasterBot extends TelegramLongPollingBot {
                     editMessageText = managementWorkTime(chatId, messageId);
                     return editMessageText;
                 case "myWorkTimeStatusApprove":
-                    long between = ChronoUnit.DAYS.between(holidayState.startDate, holidayState.endDate);
-                    if (between > 0) {
+                    long between = ChronoUnit.DAYS.between(holidayState.getStartDate(), holidayState.getEndDate());
+
+                    if (between >= 0) {
                         LocalDate date = holidayState.startDate;
                         for (int i = 0; i <= between; i++) {
                             Appointment appointment = new Appointment();
@@ -257,7 +259,10 @@ public class MasterBot extends TelegramLongPollingBot {
                             appointment.setWorkStatus(holidayState.getWorkStatus());
                             appointment.setService(serviceService.findByName("holiday"));
 
-                            date = date.plusDays(1);
+                            if (between > 0) {
+                                date = date.plusDays(1);
+                            }
+
                             appointmentService.create(appointment);
                         }
 
@@ -993,6 +998,16 @@ public class MasterBot extends TelegramLongPollingBot {
             return hours + "ч";
         } else {
             return remainingMinutes + "мин";
+        }
+    }
+
+    public void deleteMessageById(String chatId, int messageId) {
+        DeleteMessage deleteMessage = new DeleteMessage(chatId, messageId);
+
+        try {
+            execute(deleteMessage);
+        } catch (TelegramApiException e) {
+            log.error("Some error with answer:" + e.getMessage());
         }
     }
 }
