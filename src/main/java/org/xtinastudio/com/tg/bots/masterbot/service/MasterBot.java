@@ -22,6 +22,7 @@ import org.xtinastudio.com.enums.AppointmentStatus;
 import org.xtinastudio.com.enums.WorkStatus;
 import org.xtinastudio.com.enums.WorkTime;
 import org.xtinastudio.com.service.*;
+import org.xtinastudio.com.tg.bots.clientbot.service.MasterRatingNotice;
 import org.xtinastudio.com.tg.properties.MasterBotProperties;
 
 import java.time.DayOfWeek;
@@ -44,6 +45,9 @@ public class MasterBot extends TelegramLongPollingBot {
 
     @Autowired
     private AppointmentService appointmentService;
+
+    @Autowired
+    private MasterRatingNotice masterRatingNotice;
 
     @Autowired
     private ClientService clientService;
@@ -197,6 +201,7 @@ public class MasterBot extends TelegramLongPollingBot {
                     Appointment approve = appointmentService.getById(Long.parseLong(appointmentId));
                     approve.setStatus(AppointmentStatus.COMPLETED);
                     appointmentService.editById(approve.getId(), approve);
+                    masterRatingNotice.sendCheckRatingToClient(approve);
                     editMessageText = menu(chatId, messageId);
                     return editMessageText;
                 case "myServicesSelectRateCancelServiceApprove":

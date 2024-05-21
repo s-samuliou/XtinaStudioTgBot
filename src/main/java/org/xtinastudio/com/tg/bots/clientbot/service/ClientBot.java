@@ -1540,6 +1540,7 @@ public class ClientBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
+        //TODO: approveCheckRating_
         InlineKeyboardButton yesButton = new InlineKeyboardButton();
         yesButton.setText(convertToEmoji(":white_check_mark: Подтверждаю"));
         yesButton.setCallbackData("approveCheckRating_" + ratingState.getMasterRating());
