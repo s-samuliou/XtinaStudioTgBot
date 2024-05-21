@@ -58,17 +58,16 @@ public class ClientBot extends TelegramLongPollingBot {
     @Autowired
     private MasterNotice masterNotice;
 
-    private BookingState state = new BookingState();
+    private BookingState bookingState = new BookingState();
+
+    private RatingState ratingState = new RatingState();
 
     private Long canceledAppointment = null;
 
     private final ClientBotProperties botProperties;
 
-    /*private final MessageClientService service;*/
-
-    public ClientBot(ClientBotProperties botProperties/*, MessageClientService service*/) {
+    public ClientBot(ClientBotProperties botProperties) {
         this.botProperties = botProperties;
-        /*this.service = service;*/
 
         List<BotCommand> commandList = new ArrayList<>();
         commandList.add(new BotCommand("/start", "Начать использовать бот"));
@@ -153,22 +152,22 @@ public class ClientBot extends TelegramLongPollingBot {
                 case "menuSendMessage":
                     deleteMessageById(chatId.toString(), messageId.intValue());
                     sendMessage = menu(chatId);
-                    state = new BookingState();
+                    bookingState = new BookingState();
                     return sendMessage;
                 case "menu":
                     editMessage = menu(chatId, messageId);
-                    state = new BookingState();
+                    bookingState = new BookingState();
                     return editMessage;
                 case "next":
                     editMessage = selectSalon(chatId, messageId);
-                    state = new BookingState();
+                    bookingState = new BookingState();
                     return editMessage;
                 case "wayToSalon":
                     deleteMessageById(chatId.toString(), messageId.intValue());
                     sendLocation = sendSalonLocation(chatId);
                     return sendLocation;
                 case "bookService":
-                    editMessage = bookService(chatId, state, messageId);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "aboutSalon":
                     editMessage = aboutSalon(chatId, messageId);
@@ -178,43 +177,43 @@ public class ClientBot extends TelegramLongPollingBot {
                     return editMessage;
                 case "serviceKind":
                     String serviceKind = getDataCallbackQuery(data, 1);
-                    state.setServiceKind(serviceKind);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setServiceKind(serviceKind);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "service":
                     String service = getDataCallbackQuery(data, 1);
                     Services serviceByName = serviceService.findByName(service);
-                    state.setService(serviceByName);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setService(serviceByName);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "master":
                     String master = getDataCallbackQuery(data, 1);
                     Master masterById = masterService.findById(Long.parseLong(master));
-                    state.setMaster(masterById);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setMaster(masterById);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "date":
                     String date = getDataCallbackQuery(data, 1);
                     LocalDate localDate = LocalDate.parse(date);
-                    state.setDate(localDate);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setDate(localDate);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "time":
                     String time = getDataCallbackQuery(data, 1);
                     WorkTime workTime = parseWorkTime(time);
-                    state.setWorkTime(workTime);
-                    editMessage = approveBookingService(chatId, state, messageId);
+                    bookingState.setWorkTime(workTime);
+                    editMessage = approveBookingService(chatId, bookingState, messageId);
                     return editMessage;
                 case "approve":
                     Appointment appointment = new Appointment();
-                    appointment.setService(state.getService());
-                    appointment.setMaster(state.getMaster());
-                    appointment.setAppointmentDate(state.getDate());
-                    appointment.setAppointmentTime(state.getWorkTime());
+                    appointment.setService(bookingState.getService());
+                    appointment.setMaster(bookingState.getMaster());
+                    appointment.setAppointmentDate(bookingState.getDate());
+                    appointment.setAppointmentTime(bookingState.getWorkTime());
                     appointment.setClient(clientService.findByChatId(chatId));
                     appointment.setStatus(AppointmentStatus.BANNED);
                     appointmentService.create(appointment);
-                    state = new BookingState();
+                    bookingState = new BookingState();
                     editMessage = menu(chatId, messageId);
                     if (appointment.getMaster().getChatId() != null) {
                         masterNotice.sendBookedNoticeToMaster(appointment);
@@ -263,41 +262,46 @@ public class ClientBot extends TelegramLongPollingBot {
                     editMessage = instruction(chatId, messageId);
                     return editMessage;
                 case "backToServiceKind":
-                    state.setServiceKind(null);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setServiceKind(null);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "backToServices":
-                    state.setService(null);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setService(null);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "backToMasters":
-                    state.setMaster(null);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setMaster(null);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "backToDate":
-                    state.setDate(null);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setDate(null);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "backToTime":
-                    state.setWorkTime(null);
-                    editMessage = bookService(chatId, state, messageId);
+                    bookingState.setWorkTime(null);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "backToCalendar":
-                    editMessage = bookService(chatId, state, messageId);
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "previousMonth":
-                    LocalDate previousMonth = state.getSelectMonth();
-                    state.setSelectMonth(previousMonth.minusMonths(1));
-                    editMessage = bookService(chatId, state, messageId);
+                    LocalDate previousMonth = bookingState.getSelectMonth();
+                    bookingState.setSelectMonth(previousMonth.minusMonths(1));
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "nextMonth":
-                    LocalDate nextMonth = state.getSelectMonth();
-                    state.setSelectMonth(nextMonth.plusMonths(1));
-                    editMessage = bookService(chatId, state, messageId);
+                    LocalDate nextMonth = bookingState.getSelectMonth();
+                    bookingState.setSelectMonth(nextMonth.plusMonths(1));
+                    editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
-                case "rating":
+                case "checkRating":
                     int checkRating = Integer.parseInt(getDataCallbackQuery(data, 1));
-
+                    ratingState.setMasterRating(checkRating);
+                    editMessage = approveCheckRating(chatId, messageId);
+                    return editMessage;
+                case "backToSendCheckRating":
+                    editMessage = sendCheckRating(chatId, messageId, ratingState.getAppointment());
+                    return editMessage;
                 default:
                     break;
             }
@@ -1037,8 +1041,8 @@ public class ClientBot extends TelegramLongPollingBot {
         backButtonRow.add(backButton);
         keyboard.add(backButtonRow);
 
-        markup.setKeyboard(keyboard);
         sendMessage.setReplyMarkup(markup);
+        markup.setKeyboard(keyboard);
 
         return sendMessage;
     }
@@ -1418,15 +1422,23 @@ public class ClientBot extends TelegramLongPollingBot {
         return keyboardMarkup;
     }
 
-    public SendMessage sendCheckRating(Appointment appointment) {
-        SendMessage sendMessage = new SendMessage();
+    public EditMessageText sendCheckRating(Long chatId, Long messageId, Appointment appointment) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
         StringBuilder text = new StringBuilder();
 
         Master master = appointment.getMaster();
         Services service = appointment.getService();
         Client client = appointment.getClient();
 
-        text.append("Поставьте оценку мастеру '").append(master.getName()).append("' за проделанную процедуру '").append(service.getName()).append("':\n");
+        ratingState.setAppointment(appointment);
+        ratingState.setMaster(master);
+
+        text.append("Поставьте оценку мастеру '").append(master.getName())
+                .append("' за проделанную процедуру '").append(service.getName()).append("':\n");
+
+        text.append("\nВы можете не ставить оценку мастеру нажав главное меню.\n\n");
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -1436,7 +1448,59 @@ public class ClientBot extends TelegramLongPollingBot {
         for (int i = 1; i <= 5; i++) {
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(convertToEmoji(String.valueOf(i) + " :star:"));
-            button.setCallbackData("rating_" + i);
+            button.setCallbackData("checkRating_" + i);
+            if (i <= 3) {
+                row1.add(button);
+            } else {
+                row2.add(button);
+            }
+        }
+
+        keyboard.add(row1);
+        keyboard.add(row2);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        editMessageText.setChatId(client.getChatId());
+        editMessageText.setText(convertToEmoji(text.toString()));
+
+        try {
+            execute(editMessageText);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
+        return editMessageText;
+    }
+
+    public SendMessage sendCheckRating(Appointment appointment) {
+        SendMessage sendMessage = new SendMessage();
+        StringBuilder text = new StringBuilder();
+
+        Master master = appointment.getMaster();
+        Services service = appointment.getService();
+        Client client = appointment.getClient();
+
+        ratingState.setAppointment(appointment);
+        ratingState.setMaster(master);
+
+        text.append("Поставьте оценку мастеру '").append(master.getName())
+                .append("' за проделанную процедуру '").append(service.getName()).append("':\n");
+
+        text.append("\nВы можете не ставить оценку мастеру нажав главное меню.\n\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(convertToEmoji(String.valueOf(i) + " :star:"));
+            button.setCallbackData("checkRating_" + i);
             if (i <= 3) {
                 row1.add(button);
             } else {
@@ -1455,6 +1519,12 @@ public class ClientBot extends TelegramLongPollingBot {
         sendMessage.setChatId(client.getChatId());
         sendMessage.setText(convertToEmoji(text.toString()));
 
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
         return sendMessage;
     }
 
@@ -1465,7 +1535,27 @@ public class ClientBot extends TelegramLongPollingBot {
 
         StringBuilder text = new StringBuilder();
 
+        text.append("Подтвердите выбранную вами оценку для мастера\n\n");
 
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        InlineKeyboardButton yesButton = new InlineKeyboardButton();
+        yesButton.setText(convertToEmoji(":white_check_mark: Подтверждаю"));
+        yesButton.setCallbackData("approveCheckRating_" + ratingState.getMasterRating());
+        List<InlineKeyboardButton> yesButtonRow = new ArrayList<>();
+        yesButtonRow.add(yesButton);
+        keyboard.add(yesButtonRow);
+
+        InlineKeyboardButton backButton = new InlineKeyboardButton();
+        backButton.setText(convertToEmoji(":arrow_backward: Назад"));
+        backButton.setCallbackData("backToSendCheckRating_");
+        List<InlineKeyboardButton> backButtonRow = new ArrayList<>();
+        backButtonRow.add(backButton);
+        keyboard.add(backButtonRow);
+
+        editMessageText.setReplyMarkup(markup);
+        markup.setKeyboard(keyboard);
 
         editMessageText.setText(convertToEmoji(text.toString()));
         return editMessageText;
