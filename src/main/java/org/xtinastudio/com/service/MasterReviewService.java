@@ -1,5 +1,6 @@
 package org.xtinastudio.com.service;
 
+import org.springframework.data.repository.query.Param;
 import org.xtinastudio.com.entity.Client;
 import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.entity.MasterReview;
@@ -18,7 +19,11 @@ public interface MasterReviewService {
 
     MasterReview findByMaster(Master master);
 
-    double getRatingByMaster(Master master);
+    int countByMaster(Master master);
+
+    List<MasterReview> getByMaster(Master master);
+
+    Double getMasterRating(Master master);
 
     List<MasterReview> getAll();
 

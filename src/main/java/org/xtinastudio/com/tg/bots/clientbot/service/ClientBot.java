@@ -302,6 +302,15 @@ public class ClientBot extends TelegramLongPollingBot {
                 case "backToSendCheckRating":
                     editMessage = sendCheckRating(chatId, messageId, ratingState.getAppointment());
                     return editMessage;
+                case "approveCheckRating":
+                    deleteMessageById(chatId.toString(), messageId.intValue());
+                    MasterReview masterReview = new MasterReview();
+                    masterReview.setClient(clientService.findByChatId(chatId));
+                    masterReview.setMaster(ratingState.getMaster());
+                    masterReview.setRating(ratingState.getMasterRating());
+                    masterReview.setReviewDate(LocalDate.now().atStartOfDay());
+                    masterReviewService.create(masterReview);
+                    break;
                 default:
                     break;
             }
@@ -379,7 +388,7 @@ public class ClientBot extends TelegramLongPollingBot {
         List<Master> masters = masterService.getAllBySalon(salon);
 
         for (Master master : masters) {
-            text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n").append(":link: ").append("Страничка: ").append(master.getUrl()).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+            text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getMasterRating(master)).append("\n").append(":link: ").append("Страничка: ").append(master.getUrl()).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
         }
 
         editMessageText.setText(convertToEmoji(text.toString()));
@@ -858,7 +867,7 @@ public class ClientBot extends TelegramLongPollingBot {
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             for (Master master : allMasters) {
-                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":scroll: ").append("Статус: ").append(master.getWorkStatus().getDescription()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getRatingByMaster(master)).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":scroll: ").append("Статус: ").append(master.getWorkStatus().getDescription()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getMasterRating(master)).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
 
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":star: " + master.getName()));
