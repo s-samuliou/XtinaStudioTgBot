@@ -190,6 +190,19 @@ public class ClientBot extends TelegramLongPollingBot {
                     bookingState.setService(serviceByName);
                     editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
+                case "usualTime":
+                    bookingState.setIndividualTime(false);
+                    editMessage = bookService(chatId, bookingState, messageId);
+                    return editMessage;
+                case "individualTime":
+                    bookingState.setIndividualTime(true);
+                    editMessage = bookService(chatId, bookingState, messageId);
+                    return editMessage;
+                case "duration":
+                    int duration = Integer.parseInt(getDataCallbackQuery(data, 1));
+                    bookingState.setDuration(duration);
+                    editMessage = bookService(chatId, bookingState, messageId);
+                    return editMessage;
                 case "master":
                     String master = getDataCallbackQuery(data, 1);
                     Master masterById = masterService.findById(Long.parseLong(master));
@@ -216,6 +229,9 @@ public class ClientBot extends TelegramLongPollingBot {
                     appointment.setAppointmentTime(bookingState.getWorkTime());
                     appointment.setClient(clientService.findByChatId(chatId));
                     appointment.setStatus(AppointmentStatus.BANNED);
+                    if (bookingState.getIndividualTime()) {
+                        appointment.setDuration(bookingState.getDuration());
+                    }
                     appointmentService.create(appointment);
                     bookingState = new BookingState();
                     editMessage = menu(chatId, messageId);
@@ -271,6 +287,14 @@ public class ClientBot extends TelegramLongPollingBot {
                     return editMessage;
                 case "backToServices":
                     bookingState.setService(null);
+                    editMessage = bookService(chatId, bookingState, messageId);
+                    return editMessage;
+                case "backToIndividualTime":
+                    bookingState.setIndividualTime(false);
+                    editMessage = bookService(chatId, bookingState, messageId);
+                    return editMessage;
+                case "backToSelectIndividualTime":
+                    bookingState.setDuration(null);
                     editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "backToMasters":
@@ -866,6 +890,81 @@ public class ClientBot extends TelegramLongPollingBot {
             return editMessageText;
         }
 
+        if (!state.checkIndividualTime()) {
+            text.append("Вы выбрали:\n").append(":cherry_blossom: ").append("Вид услуги: ").append(state.getServiceKind()).append("\n\n");
+
+            text.append("Сейчас Вам следует выбрать обычную продолжительность или индивидуальную:\n");
+            text.append("Если Вы консультировались с мастером по поводу продолжительности процедуры и Вам нужно меньше/больше времени на процедуру, то Вам следует выбрать индивидуальное время.\n\n");
+            text.append("Если Вы не консультировались с мастером, то выбирайте обыное время.\n\n");
+
+            InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(convertToEmoji(":fleur_de_lis:" + "Индивидуальная продолжительность"));
+            button.setCallbackData("individualTime_");
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            row.add(button);
+            keyboard.add(row);
+
+            InlineKeyboardButton button1 = new InlineKeyboardButton();
+            button1.setText(convertToEmoji(":fleur_de_lis:" + "Обычная продолжительность"));
+            button1.setCallbackData("usualTime_");
+            List<InlineKeyboardButton> row2 = new ArrayList<>();
+            row2.add(button1);
+            keyboard.add(row2);
+
+            addBackBookStageButton(keyboard,"backToServices");
+            addMainMenuButton(keyboard);
+
+            markup.setKeyboard(keyboard);
+            editMessageText.setReplyMarkup(markup);
+
+            editMessageText.setText(convertToEmoji(text.toString()));
+
+            return editMessageText;
+        }
+
+        if (state.getIndividualTime()) {
+            if (!state.checkDuration()) {
+                text.append("Вы выбрали:\n")
+                        .append(":cherry_blossom: ").append("Вид услуги: ").append(state.getServiceKind()).append("\n")
+                        .append("::").append("Продолжительность: ").append("индивидуальная\n\n");
+
+                text.append("Выберете индивидуальную прододжительность для услуги, которую Вам сказал мастрер после консультации:\n\n");
+
+                InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+                List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+                List<InlineKeyboardButton> row = new ArrayList<>();
+
+                for (int i = 15; i <= 180; i += 15) {
+                    InlineKeyboardButton button = new InlineKeyboardButton();
+                    button.setText(convertMinutesToHours(i));
+                    button.setCallbackData("duration_" + i);
+
+                    row.add(button);
+                    if (row.size() == 3) {
+                        keyboard.add(row);
+                        row = new ArrayList<>();
+                    }
+                }
+                if (!row.isEmpty()) {
+                    keyboard.add(row);
+                }
+
+                addBackBookStageButton(keyboard, "backToIndividualTime");
+                addMainMenuButton(keyboard);
+
+                markup.setKeyboard(keyboard);
+                editMessageText.setReplyMarkup(markup);
+
+                editMessageText.setText(convertToEmoji(text.toString()));
+
+                return editMessageText;
+            }
+        }
+
         if (!state.checkMaster()) {
             text.append("Вы выбрали:\n")
                     .append(":cherry_blossom: ").append("Вид услуги: ").append(state.getServiceKind()).append("\n")
@@ -890,7 +989,7 @@ public class ClientBot extends TelegramLongPollingBot {
                 keyboard.add(row);
             }
 
-            addBackBookStageButton(keyboard, "backToServices");
+            addBackBookStageButton(keyboard, "backToIndividualTime");
             addMainMenuButton(keyboard);
 
             markup.setKeyboard(keyboard);
@@ -924,7 +1023,14 @@ public class ClientBot extends TelegramLongPollingBot {
         }
 
         if (!state.checkTime()) {
-            int duration = state.getService().getDuration();
+            int duration;
+
+            if (state.getIndividualTime()) {
+                duration = state.getDuration();
+            } else {
+                duration = state.getService().getDuration();
+            }
+
             LocalDate chosenDate = state.getDate();
 
             text.append(":star: Вы выбрали:\n")
@@ -938,10 +1044,6 @@ public class ClientBot extends TelegramLongPollingBot {
 
             List<Appointment> appointments = appointmentService.getAppointmentsByDateAndMaster(chosenDate, state.getMaster());
 
-            LocalDateTime currentDateTime = LocalDateTime.now();
-            int currentHour = currentDateTime.getHour();
-            int currentMinute = currentDateTime.getMinute();
-
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
@@ -953,7 +1055,14 @@ public class ClientBot extends TelegramLongPollingBot {
             for (Appointment appointment : appointments) {
                 if (appointment.getStatus() == AppointmentStatus.BANNED) {
                     int startDurationService = appointment.getAppointmentTime().ordinal();
-                    int endDurationService = startDurationService + appointment.getService().getDuration() / 15;
+                    int endDurationService;
+
+                    if (appointment.getDuration() != null) {
+                        endDurationService = startDurationService + appointment.getDuration() / 15;
+                    } else {
+                        endDurationService = startDurationService + appointment.getService().getDuration() / 15;
+                    }
+
                     bookedServicePeriods.put(startDurationService, endDurationService);
                 }
             }
@@ -1013,13 +1122,17 @@ public class ClientBot extends TelegramLongPollingBot {
             return true;
         }
 
-        int bookedEndTime = bookedTime + duration;
+        int bookedStartTime = bookedTime;
+        int bookedEndTime = bookedStartTime + duration;
 
         for (Map.Entry<Integer, Integer> entry : bookedServicePeriods.entrySet()) {
             int startTime = entry.getKey();
             int endTime = entry.getValue();
 
-            if (bookedTime <= endTime && bookedEndTime > startTime) {
+            /*if (bookedTime <= endTime && bookedEndTime > startTime) {
+                return false;
+            }*/
+            if (bookedTime < endTime && bookedEndTime > startTime) {
                 return false;
             }
         }

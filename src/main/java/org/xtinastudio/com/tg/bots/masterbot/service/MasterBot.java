@@ -340,7 +340,6 @@ public class MasterBot extends TelegramLongPollingBot {
         }
     }
 
-
     private EditMessageText approveDateDeleteVacation(Long chatId, Long messageId) {
         EditMessageText editMessageText = new EditMessageText();
         editMessageText.setChatId(chatId);

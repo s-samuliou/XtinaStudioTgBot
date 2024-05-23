@@ -34,6 +34,9 @@ public class Appointment {
     @Column(name = "work_status")
     private WorkStatus workStatus;
 
+    @Column(name = "duration")
+    private Integer duration;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "client_id")
     private Client client;

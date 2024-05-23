@@ -25,6 +25,24 @@ public class BookingState {
 
     LocalDate selectMonth = LocalDate.now();
 
+    Boolean individualTime;
+
+    Integer duration;
+
+    boolean checkDuration() {
+        if (this.duration == null) {
+            return false;
+        }
+        return true;
+    }
+
+    boolean checkIndividualTime() {
+        if (this.individualTime == null) {
+            return false;
+        }
+        return true;
+    }
+
     boolean checkSelectMonth() {
         if (this.selectMonth == null) {
             return false;
