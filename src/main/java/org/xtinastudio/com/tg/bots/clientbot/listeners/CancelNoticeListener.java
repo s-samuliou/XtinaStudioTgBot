@@ -3,7 +3,6 @@ package org.xtinastudio.com.tg.bots.clientbot.listeners;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.xtinastudio.com.tg.bots.clientbot.events.CancelNoticeEvent;
-import org.xtinastudio.com.tg.bots.clientbot.events.RateMasterEvent;
 import org.xtinastudio.com.tg.bots.clientbot.service.ClientBot;
 
 @Component

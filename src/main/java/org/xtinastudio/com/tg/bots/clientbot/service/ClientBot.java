@@ -903,6 +903,10 @@ public class ClientBot extends TelegramLongPollingBot {
                     .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n")
                     .append(":woman_artist: ").append("Мастер: ").append(state.getMaster().getName()).append("\n\n");
 
+            text.append(":palm_tree:").append(" - у мастера выходной").append("\n")
+                    .append(":hospital:").append(" - у мастера больничный").append("\n")
+                    .append(":airplane:").append(" - у мастера отпуск").append("\n\n");
+
             text.append("Выберите дату:\n");
 
             editMessageText.setText(convertToEmoji(text.toString()));
@@ -1398,7 +1402,7 @@ public class ClientBot extends TelegramLongPollingBot {
                             } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.VACATION) {
                                 dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":airplane:"));
                                 dayButton.setCallbackData("backToDate");
-                            } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.DAY_OFF) {
+                            } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.DAYOFF) {
                                 dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":palm_tree:"));
                                 dayButton.setCallbackData("backToDate");
                             }

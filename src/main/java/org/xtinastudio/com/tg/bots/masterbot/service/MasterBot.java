@@ -348,7 +348,7 @@ public class MasterBot extends TelegramLongPollingBot {
 
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(convertToEmoji("Подтверждаю"));
+            button.setText(convertToEmoji(":white_check_mark: Подтверждаю"));
             button.setCallbackData("myWorkTimeStatusApprove_");
             row.add(button);
             keyboard.add(row);
@@ -958,7 +958,7 @@ public class MasterBot extends TelegramLongPollingBot {
                             } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.VACATION) {
                                 dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":airplane:"));
                                 dayButton.setCallbackData(name + "_" + currentDateInLoop.toString());
-                            } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.DAY_OFF) {
+                            } else if (appointmentsByDateAndMaster.get(0).getWorkStatus() == WorkStatus.DAYOFF) {
                                 dayButton.setText(convertToEmoji(String.valueOf(dayCounter) + ":palm_tree:"));
                                 dayButton.setCallbackData(name + "_" + currentDateInLoop.toString());
                             }
