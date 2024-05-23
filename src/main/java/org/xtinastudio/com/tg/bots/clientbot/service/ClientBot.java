@@ -303,14 +303,21 @@ public class ClientBot extends TelegramLongPollingBot {
                     editMessage = sendCheckRating(chatId, messageId, ratingState.getAppointment());
                     return editMessage;
                 case "approveCheckRating":
+                    try {
+                        deleteMessageById(chatId.toString(), messageId.intValue());
+                        MasterReview masterReview = new MasterReview();
+                        masterReview.setClient(clientService.findByChatId(chatId));
+                        masterReview.setMaster(ratingState.getMaster());
+                        masterReview.setRating(ratingState.getMasterRating());
+                        masterReview.setReviewDate(LocalDate.now().atStartOfDay());
+                        masterReviewService.create(masterReview);
+                        sendMessage = menu(chatId);
+                        return sendMessage;
+                    } catch (Exception e){
+                        System.out.println("Exception with answer: " + e.getMessage());
+                    }
+                case "cancelNoticeDeleteMessage":
                     deleteMessageById(chatId.toString(), messageId.intValue());
-                    MasterReview masterReview = new MasterReview();
-                    masterReview.setClient(clientService.findByChatId(chatId));
-                    masterReview.setMaster(ratingState.getMaster());
-                    masterReview.setRating(ratingState.getMasterRating());
-                    masterReview.setReviewDate(LocalDate.now().atStartOfDay());
-                    masterReviewService.create(masterReview);
-                    break;
                 default:
                     break;
             }
@@ -1537,6 +1544,50 @@ public class ClientBot extends TelegramLongPollingBot {
         return sendMessage;
     }
 
+    public SendMessage sendCancelNoticeToClient(Appointment appointment) {
+        SendMessage sendMessage = new SendMessage();
+        StringBuilder text = new StringBuilder();
+
+        Master master = appointment.getMaster();
+        Services service = appointment.getService();
+        Client client = appointment.getClient();
+
+
+        text.append("Мастер '").append(master.getName())
+                .append("' отменил Вашу забронированную процедуру '").append(service.getName()).append("\n")
+                .append("Для того чтобы узнать причину отмены свяжитесь мастером в его инстаграмм(Навигация -> Наши мастера)").append("'\n\n");
+
+        text.append("Инстанрамм мастера: ").append(master.getUrl()).append("\n\n");
+
+        text.append("После того как нажмёте 'Ок' сообщение исчезнет.");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(convertToEmoji("Ок"));
+        button.setCallbackData("cancelNoticeDeleteMessage_");
+        keyboard.add(row1);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(markup);
+
+        sendMessage.setChatId(client.getChatId());
+        sendMessage.setText(convertToEmoji(text.toString()));
+
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
+        return sendMessage;
+    }
+
     public EditMessageText approveCheckRating(Long chatId, Long messageId) {
         EditMessageText editMessageText = new EditMessageText();
         editMessageText.setChatId(chatId);
@@ -1549,7 +1600,6 @@ public class ClientBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        //TODO: approveCheckRating_
         InlineKeyboardButton yesButton = new InlineKeyboardButton();
         yesButton.setText(convertToEmoji(":white_check_mark: Подтверждаю"));
         yesButton.setCallbackData("approveCheckRating_" + ratingState.getMasterRating());
