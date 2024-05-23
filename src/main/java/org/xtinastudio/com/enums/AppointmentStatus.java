@@ -2,7 +2,6 @@ package org.xtinastudio.com.enums;
 
 public enum AppointmentStatus {
     BANNED("Banned"),
-    IN_PROGRESS("In progress"),
     COMPLETED("Completed"),
     CANCELED("Canceled");
 
