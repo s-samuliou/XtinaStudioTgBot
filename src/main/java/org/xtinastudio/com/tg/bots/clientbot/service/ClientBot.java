@@ -26,6 +26,8 @@ import org.xtinastudio.com.service.*;
 import org.xtinastudio.com.tg.bots.masterbot.service.MasterNotice;
 import org.xtinastudio.com.tg.properties.ClientBotProperties;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -397,7 +399,7 @@ public class ClientBot extends TelegramLongPollingBot {
         List<Master> masters = masterService.getAllBySalon(salon);
 
         for (Master master : masters) {
-            text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getMasterRating(master)).append("\n").append(":link: ").append("Страничка: ").append(master.getUrl()).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+            text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":star: ").append("Рейтинг: ").append(roundToTwoDecimalPlaces(masterReviewService.getMasterRating(master))).append("\n").append(":link: ").append("Страничка: ").append(master.getUrl()).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
         }
 
         editMessageText.setText(convertToEmoji(text.toString()));
@@ -876,7 +878,7 @@ public class ClientBot extends TelegramLongPollingBot {
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             for (Master master : allMasters) {
-                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":scroll: ").append("Статус: ").append(master.getWorkStatus().getDescription()).append("\n").append(":star: ").append("Рейтинг: ").append(masterReviewService.getMasterRating(master)).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":scroll: ").append("Статус: ").append(master.getWorkStatus().getDescription()).append("\n").append(":star: ").append("Рейтинг: ").append(roundToTwoDecimalPlaces(masterReviewService.getMasterRating(master))).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
 
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":star: " + master.getName()));
@@ -998,6 +1000,12 @@ public class ClientBot extends TelegramLongPollingBot {
         } else {
             return true;
         }
+    }
+
+    public static double roundToTwoDecimalPlaces(double value) {
+        BigDecimal bigDecimal = BigDecimal.valueOf(value);
+        bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_UP);
+        return bigDecimal.doubleValue();
     }
 
     private boolean isNotOccupied(HashMap<Integer, Integer> bookedServicePeriods, int bookedTime, int duration) {

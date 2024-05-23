@@ -1,5 +1,6 @@
 package org.xtinastudio.com.tg.bots.masterbot.service;
 
+import com.mysql.cj.protocol.a.LocalDateValueEncoder;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +31,10 @@ import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -54,6 +57,8 @@ public class MasterBot extends TelegramLongPollingBot {
 
     @Autowired
     private ServiceService serviceService;
+
+    DeleteState deleteState = new DeleteState();
 
     CalendarState calendarState = new CalendarState();
 
@@ -213,6 +218,26 @@ public class MasterBot extends TelegramLongPollingBot {
                     editMessageText = menu(chatId, messageId);
                     return editMessageText;
                 case "myWorkTime":
+                    editMessageText = menuSelectCreateDeleteWorkTime(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeDelete":
+                    editMessageText = selectDateDeleteVacation(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeDeleteApprove":
+                    deleteState.setStartDate(LocalDate.parse(getDataCallbackQuery(data, 1)));
+                    System.out.println(deleteState.getStartDate());
+                    deleteState.setEndDate(LocalDate.parse(getDataCallbackQuery(data, 2)));
+                    System.out.println(deleteState.getEndDate());
+                    deleteState.setWorkStatus(WorkStatus.valueOf(getDataCallbackQuery(data, 3)));
+                    System.out.println(deleteState.getWorkStatus());
+                    editMessageText = approveDateDeleteVacation(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeDeleteApproveAction":
+                    Master master = masterService.findByChatId(chatId);
+                    deleteVacation(master, deleteState.getStartDate(), deleteState.getEndDate());
+                    editMessageText = menu(chatId, messageId);
+                    return editMessageText;
+                case "myWorkTimeCreate":
                     editMessageText = managementWorkTime(chatId, messageId);
                     return editMessageText;
                 case "myWorkTimeStatus":
@@ -288,6 +313,163 @@ public class MasterBot extends TelegramLongPollingBot {
         }
 
         return sendMessage;
+    }
+
+    private void deleteVacation(Master master, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("Start date and end date must not be null");
+        }
+
+        long between = ChronoUnit.DAYS.between(startDate, endDate);
+        LocalDate date = startDate;
+
+        if (between >= 0) {
+            for (int i = 0; i <= between; i++) {  // изменено < на <= чтобы включить последний день
+                List<Appointment> appointmentsByDateAndMaster = appointmentService.getAppointmentsByDateAndMaster(date, master);
+
+                if (!appointmentsByDateAndMaster.isEmpty()) {  // добавить проверку, что список не пустой
+                    for (Appointment appointment : appointmentsByDateAndMaster) {
+                        appointment.setWorkStatus(null);
+                        appointment.setStatus(AppointmentStatus.CANCELED);
+                        appointmentService.editById(appointment.getId(), appointment);
+                    }
+                }
+
+                date = date.plusDays(1);
+            }
+        }
+    }
+
+
+    private EditMessageText approveDateDeleteVacation(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+
+        text.append("Подтвердите, что Вы хотите удалить данный выходной:").append("\n\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText("Подтверждаю");
+        button.setCallbackData("myWorkTimeDeleteApproveAction_");
+        row.add(button);
+        keyboard.add(row);
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText("Назад");
+        button2.setCallbackData("myWorkTimeDelete_");
+        row1.add(button2);
+        keyboard.add(row1);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        editMessageText.setText(convertToEmoji(text.toString()));
+        return editMessageText;
+    }
+
+    private EditMessageText selectDateDeleteVacation(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+
+        text.append("Выберите выходной который хотите удалить:").append("\n\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<Appointment> appointments = appointmentService.getAll().stream()
+                .filter(appointment -> appointment.getWorkStatus() != null)
+                .sorted(Comparator.comparing(Appointment::getAppointmentDate))
+                .collect(Collectors.toList());
+
+        if (!appointments.isEmpty()) {
+            LocalDate startDate = appointments.get(0).getAppointmentDate();
+            LocalDate endDate = startDate;
+            WorkStatus currentStatus = appointments.get(0).getWorkStatus();
+
+            for (int i = 1; i < appointments.size(); i++) {
+                Appointment appointment = appointments.get(i);
+                LocalDate date = appointment.getAppointmentDate();
+                WorkStatus status = appointment.getWorkStatus();
+
+                if (status == currentStatus && date.equals(endDate.plusDays(1))) {
+                    endDate = date;
+                } else {
+                    addDateRangeButton(keyboard, startDate, endDate, currentStatus);
+                    startDate = date;
+                    endDate = date;
+                    currentStatus = status;
+                }
+            }
+
+            addDateRangeButton(keyboard, startDate, endDate, currentStatus);
+        }
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        editMessageText.setText(convertToEmoji(text.toString()));
+        return editMessageText;
+    }
+
+    private void addDateRangeButton(List<List<InlineKeyboardButton>> keyboard, LocalDate startDate, LocalDate endDate, WorkStatus status) {
+        String dateRangeText = startDate.equals(endDate)
+                ? startDate.toString()
+                : startDate.toString() + " - " + endDate.toString();
+
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(dateRangeText + " (" + status.getDescription() + ")");
+        button.setCallbackData("myWorkTimeDeleteApprove_" + startDate + "_" + endDate + "_" + status);
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(button);
+        keyboard.add(row);
+    }
+
+    private EditMessageText menuSelectCreateDeleteWorkTime(Long chatId, Long messageId) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+
+        text.append("Если Вы хотите добавить выходной/больничный/отпуск в свой календарь, то выбирите 'Добавить выходной'.").append("\n")
+                .append("Если наоброт удалить, то - 'Удалить выходной'.").append("\n\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText("Добавить выходной");
+        button.setCallbackData("myWorkTimeCreate_");
+        row.add(button);
+        keyboard.add(row);
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText("Удалить выходной");
+        button1.setCallbackData("myWorkTimeDelete_");
+        row1.add(button1);
+        keyboard.add(row1);
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        editMessageText.setText(convertToEmoji(text.toString()));
+        return editMessageText;
     }
 
     private EditMessageText managementWorkTime(Long chatId, Long messageId) {
