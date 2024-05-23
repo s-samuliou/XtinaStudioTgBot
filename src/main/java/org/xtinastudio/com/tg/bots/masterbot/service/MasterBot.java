@@ -775,6 +775,13 @@ public class MasterBot extends TelegramLongPollingBot {
 
         for (Appointment appointment : appointmentsByMaster) {
             if (appointment.getStatus().equals(AppointmentStatus.BANNED)) {
+                int duration;
+                if (appointment.getDuration() != null) {
+                    duration = appointment.getDuration();
+                } else {
+                    duration = appointment.getService().getDuration();
+                }
+
                 text.append(":hash: ").append("Номер ").append(counter+1).append(":\n")
                         .append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
                         .append(":telephone: ").append("Номер клиента: ").append(appointment.getClient().getPhoneNumber()).append("\n")
@@ -782,7 +789,7 @@ public class MasterBot extends TelegramLongPollingBot {
                         .append(":bell: ").append("Услуга: ").append(appointment.getService().getName()).append("\n")
                         .append(":calendar: ").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
                         .append(":mantelpiece_clock: ").append("Время: ").append(appointment.getAppointmentTime().getDescription()).append("\n")
-                        .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(appointment.getService().getDuration())).append("\n")
+                        .append(":hourglass: ").append("Продолжительность: " + duration).append("\n")
                         .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
 
                 InlineKeyboardButton button = new InlineKeyboardButton();

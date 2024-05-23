@@ -30,7 +30,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
@@ -640,13 +639,19 @@ public class ClientBot extends TelegramLongPollingBot {
         StringBuilder messageText = new StringBuilder(":mag_right: Ваши забронированные услуги \n\n");
         for (Appointment appointment : appointmentsByClient) {
             if (appointment.getStatus() == AppointmentStatus.BANNED) {
+                int duration;
+                if (appointment.getDuration() != null) {
+                    duration = appointment.getDuration();
+                } else {
+                    duration = appointment.getService().getDuration();
+                }
+
                 messageText.append(":bell: ").append("Услуга: " + appointment.getService().getName()).append("\n")
                         .append(":cherry_blossom: ").append("Вид услуги: ").append(appointment.getService().getKind()).append("\n")
                         .append(":woman_artist: ").append("Мастер: " + appointment.getMaster().getName()).append("\n")
                         .append(":calendar: ").append("Дата: " + appointment.getAppointmentDate()).append("\n")
                         .append(":mantelpiece_clock: ").append("Время: " + appointment.getAppointmentTime().getDescription()).append("\n")
-                        .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(appointment.getService().getDuration())).append("\n")
-                        .append(":hourglass: ").append("Продолжительность: " + appointment.getStatus()).append("\n")
+                        .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(duration)).append("\n")
                         .append(":money_with_wings: ").append("Цена: " + appointment.getService().getPrice()).append(" nis\n\n");
             }
         }
@@ -781,6 +786,14 @@ public class ClientBot extends TelegramLongPollingBot {
         LocalDate date = state.getDate();
         WorkTime workTime = state.getWorkTime();
 
+        int duration;
+
+        if (state.checkIndividualTime()) {
+            duration = state.getDuration();
+        } else {
+            duration = state.getService().getDuration();
+        }
+
         StringBuilder text = new StringBuilder();
         text.append("Подтвердите выбор услуги:\n")
                 .append(":cherry_blossom: ").append("Вид услуги: ").append(service.getKind()).append("\n")
@@ -788,7 +801,7 @@ public class ClientBot extends TelegramLongPollingBot {
                 .append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n")
                 .append(":calendar: ").append("Дата: ").append(date.toString()).append("\n")
                 .append(":mantelpiece_clock: ").append("Время: ").append(workTime.getDescription()).append("\n")
-                .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(service.getDuration()));
+                .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(duration));
 
 
         sendMessage.setText(convertToEmoji(text.toString()));
@@ -867,7 +880,6 @@ public class ClientBot extends TelegramLongPollingBot {
             for (Services service : allServices) {
 
                 text.append(":bell: ").append("Название: ").append(service.getName()).append("\n").append(":hourglass: ").append("Длительнсть: ").append(convertMinutesToHours(service.getDuration())).append("\n").append(":money_with_wings: ").append("Цена: ").append(service.getPrice()).append(" nis\n").append(":memo: ").append("Описание: ").append(service.getDescription()).append("\n\n");
-
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":fleur_de_lis:" + service.getName()));
                 button.setCallbackData("service_" + service.getName());
@@ -875,7 +887,6 @@ public class ClientBot extends TelegramLongPollingBot {
                 List<InlineKeyboardButton> row = new ArrayList<>();
 
                 row.add(button);
-
                 keyboard.add(row);
             }
 
@@ -891,31 +902,35 @@ public class ClientBot extends TelegramLongPollingBot {
         }
 
         if (!state.checkIndividualTime()) {
-            text.append("Вы выбрали:\n").append(":cherry_blossom: ").append("Вид услуги: ").append(state.getServiceKind()).append("\n\n");
+            text.append("Вы выбрали:\n")
+                    .append(":cherry_blossom: ").append("Вид услуги: ").append(state.getServiceKind()).append("\n")
+                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n");
 
-            text.append("Сейчас Вам следует выбрать обычную продолжительность или индивидуальную:\n");
-            text.append("Если Вы консультировались с мастером по поводу продолжительности процедуры и Вам нужно меньше/больше времени на процедуру, то Вам следует выбрать индивидуальное время.\n\n");
-            text.append("Если Вы не консультировались с мастером, то выбирайте обыное время.\n\n");
+            text.append("Нужна ли Вам индивидуальная длительность процедуры?\n\n");
+            text.append(":bookmark: Если Вы консультировались с мастером по поводу продолжительности процедуры и Вам нужно меньше/больше времени на процедуру, то Вам следует выбрать индивидуальное время.\n");
+            text.append(":bookmark: Если Вы не консультировались с мастером, то выбирайте обыное время.\n\n");
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(convertToEmoji(":fleur_de_lis:" + "Индивидуальная продолжительность"));
+            button.setText(convertToEmoji(":fleur_de_lis:" + "Да, нужна"));
             button.setCallbackData("individualTime_");
             List<InlineKeyboardButton> row = new ArrayList<>();
             row.add(button);
             keyboard.add(row);
 
             InlineKeyboardButton button1 = new InlineKeyboardButton();
-            button1.setText(convertToEmoji(":fleur_de_lis:" + "Обычная продолжительность"));
+            button1.setText(convertToEmoji(":fleur_de_lis:" + "Нет, не нужна"));
             button1.setCallbackData("usualTime_");
             List<InlineKeyboardButton> row2 = new ArrayList<>();
             row2.add(button1);
             keyboard.add(row2);
 
-            addBackBookStageButton(keyboard,"backToServices");
-            addMainMenuButton(keyboard);
+            List<InlineKeyboardButton> row3 = new ArrayList<>();
+            row3.add(addBackBookStageButton(keyboard,"backToServices"));
+            row3.add(addMainMenuButton(keyboard));
+            keyboard.add(row3);
 
             markup.setKeyboard(keyboard);
             editMessageText.setReplyMarkup(markup);
@@ -929,7 +944,8 @@ public class ClientBot extends TelegramLongPollingBot {
             if (!state.checkDuration()) {
                 text.append("Вы выбрали:\n")
                         .append(":cherry_blossom: ").append("Вид услуги: ").append(state.getServiceKind()).append("\n")
-                        .append("::").append("Продолжительность: ").append("индивидуальная\n\n");
+                        .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n")
+                        .append(":hourglass:").append("Продолжительность: ").append("индивидуальная\n\n");
 
                 text.append("Выберете индивидуальную прододжительность для услуги, которую Вам сказал мастрер после консультации:\n\n");
 
@@ -1024,7 +1040,6 @@ public class ClientBot extends TelegramLongPollingBot {
 
         if (!state.checkTime()) {
             int duration;
-
             if (state.getIndividualTime()) {
                 duration = state.getDuration();
             } else {
@@ -1405,22 +1420,24 @@ public class ClientBot extends TelegramLongPollingBot {
         return sendMessage;
     }
 
-    private void addMainMenuButton(List<List<InlineKeyboardButton>> keyboard) {
+    private InlineKeyboardButton addMainMenuButton(List<List<InlineKeyboardButton>> keyboard) {
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText(convertToEmoji(":house_with_garden: Главное меню "));
         button.setCallbackData("menu");
         List<InlineKeyboardButton> row = new ArrayList<>();
         row.add(button);
         keyboard.add(row);
+        return button;
     }
 
-    private void addBackBookStageButton(List<List<InlineKeyboardButton>> keyboard, String buttonName) {
+    private InlineKeyboardButton addBackBookStageButton(List<List<InlineKeyboardButton>> keyboard, String buttonName) {
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText(convertToEmoji(":arrow_left: Назад "));
         button.setCallbackData(buttonName);
         List<InlineKeyboardButton> row = new ArrayList<>();
         row.add(button);
         keyboard.add(row);
+        return button;
     }
 
     private void addNextButton(List<List<InlineKeyboardButton>> keyboard) {
