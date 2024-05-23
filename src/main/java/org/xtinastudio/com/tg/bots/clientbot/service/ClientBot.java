@@ -311,8 +311,7 @@ public class ClientBot extends TelegramLongPollingBot {
                         masterReview.setRating(ratingState.getMasterRating());
                         masterReview.setReviewDate(LocalDate.now().atStartOfDay());
                         masterReviewService.create(masterReview);
-                        sendMessage = menu(chatId);
-                        return sendMessage;
+                        break;
                     } catch (Exception e){
                         System.out.println("Exception with answer: " + e.getMessage());
                     }
@@ -322,6 +321,7 @@ public class ClientBot extends TelegramLongPollingBot {
                     break;
             }
         }
+
         return null;
     }
 
@@ -1551,7 +1551,6 @@ public class ClientBot extends TelegramLongPollingBot {
         Master master = appointment.getMaster();
         Services service = appointment.getService();
         Client client = appointment.getClient();
-
 
         text.append("Мастер '").append(master.getName())
                 .append("' отменил Вашу забронированную процедуру '").append(service.getName()).append("\n")
