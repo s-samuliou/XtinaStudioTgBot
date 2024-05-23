@@ -29,6 +29,8 @@ import org.xtinastudio.com.tg.properties.ClientBotProperties;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
 
@@ -957,7 +959,7 @@ public class ClientBot extends TelegramLongPollingBot {
             for (int i = 0; i < WorkTime.values().length - duration / 15; i += duration / 15) {
                 int bookedTime = WorkTime.values()[i].ordinal();
 
-                if (isNotOccupied(bookedServicePeriods, bookedTime, duration/15)) {
+                if (isNotOccupied(bookedServicePeriods, bookedTime, duration/15) && isTimePassed(WorkTime.values()[i].getDescription())) {
                     InlineKeyboardButton button = new InlineKeyboardButton();
                     button.setText(WorkTime.values()[i].getDescription() + " - " + WorkTime.values()[i + duration / 15].getDescription());
                     button.setCallbackData("time_" + WorkTime.values()[i].getDescription());
@@ -985,6 +987,17 @@ public class ClientBot extends TelegramLongPollingBot {
         }
 
         return null;
+    }
+
+    private boolean isTimePassed(String timeStr) {
+        if (LocalDate.now().equals(bookingState.getDate())) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("H:mm");
+            LocalTime inputTime = LocalTime.parse(timeStr, formatter);
+            LocalTime currentTime = LocalTime.now();
+            return currentTime.isBefore(inputTime);
+        } else {
+            return true;
+        }
     }
 
     private boolean isNotOccupied(HashMap<Integer, Integer> bookedServicePeriods, int bookedTime, int duration) {
