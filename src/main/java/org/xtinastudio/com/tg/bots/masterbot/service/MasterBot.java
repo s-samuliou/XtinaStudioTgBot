@@ -150,6 +150,7 @@ public class MasterBot extends TelegramLongPollingBot {
 
             switch (prefix) {
                 case "menuSendMessage":
+                    deleteMessageById(chatId.toString(), messageId.intValue());
                     holidayState = new HolidayState();
                     sendMessage = menu(chatId);
                     return sendMessage;
@@ -302,6 +303,7 @@ public class MasterBot extends TelegramLongPollingBot {
                     editMessageText = menu(chatId, messageId);
                     return editMessageText;
                 case "wayToSalon":
+                    deleteMessageById(chatId.toString(), messageId.intValue());
                     sendLocation = sendSalonLocation(chatId);
                     return sendLocation;
                 case "reauthorize":

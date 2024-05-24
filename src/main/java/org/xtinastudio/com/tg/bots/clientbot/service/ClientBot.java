@@ -1003,7 +1003,7 @@ public class ClientBot extends TelegramLongPollingBot {
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             for (Master master : allMasters) {
-                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":scroll: ").append("Статус: ").append(master.getWorkStatus().getDescription()).append("\n").append(":star: ").append("Рейтинг: ").append(roundToTwoDecimalPlaces(masterReviewService.getMasterRating(master))).append("\n").append(":memo: ").append("Описание: ").append(master.getName()).append("\n");
+                text.append(":woman_artist: ").append("Мастер: ").append(master.getName()).append("\n").append(":scroll: ").append("Статус: ").append(master.getWorkStatus().getDescription()).append("\n").append(":star: ").append("Рейтинг: ").append(roundToTwoDecimalPlaces(masterReviewService.getMasterRating(master))).append("\n").append(":memo: ").append("Описание: ").append(master.getDescription()).append("\n");
 
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":star: " + master.getName()));

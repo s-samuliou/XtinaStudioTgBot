@@ -185,12 +185,12 @@
             <column name="description" value="It's information about our salon"/>
         </insert>
 
-        <insert tableName="salon">
+        <!--<insert tableName="salon">
             <column name="address" value="Dram Theatre"/>
             <column name="latitude" value="53.89766535678621"/>
             <column name="longitude" value="30.333012049445507"/>
             <column name="description" value="It's information about our salon"/>
-        </insert>
+        </insert>-->
     </changeSet>
 
     <changeSet id="21" author="s_samuliou">
@@ -238,16 +238,16 @@
     <changeSet id="23" author="s_samuliou">
         <insert tableName="masters">
             <column name="chat_id" value="NULL"/>
-            <column name="name" value="Master 1"/>
-            <column name="login" value="admin"/>
-            <column name="password" value="admin"/>
+            <column name="name" value="Степан Самулёв"/>
+            <column name="login" value="master"/>
+            <column name="password" value="master"/>
             <column name="url" value="https://www.instagram.com/xtina.studio/"/>
-            <column name="description" value="admin"/>
+            <column name="description" value="Мастер с опытом работы 5 лет"/>
             <column name="photo_url" value="none"/>
             <column name="role" value="MASTER"/>
             <column name="work_status" value="WORKING"/>
             <column name="salon_id" value="1"/>
-        </insert>
+        </insert><!--
         <insert tableName="masters">
             <column name="chat_id" value="NULL"/>
             <column name="name" value="Master 2"/>
@@ -259,7 +259,7 @@
             <column name="role" value="MASTER"/>
             <column name="work_status" value="WORKING"/>
             <column name="salon_id" value="2"/>
-        </insert>
+        </insert>-->
     </changeSet>
 
     <changeSet id="24" author="s_samuliou">
@@ -271,30 +271,30 @@
             <column name="master_id" value="1"/>
             <column name="service_id" value="2"/>
         </insert>
-        <insert tableName="master_services">
+        <!--<insert tableName="master_services">
             <column name="master_id" value="2"/>
             <column name="service_id" value="1"/>
         </insert>
         <insert tableName="master_services">
             <column name="master_id" value="2"/>
             <column name="service_id" value="2"/>
-        </insert>
+        </insert>-->
         <insert tableName="master_services">
             <column name="master_id" value="1"/>
             <column name="service_id" value="3"/>
-        </insert>
+        </insert><!--
         <insert tableName="master_services">
             <column name="master_id" value="2"/>
             <column name="service_id" value="3"/>
-        </insert>
+        </insert>-->
         <insert tableName="master_services">
             <column name="master_id" value="1"/>
             <column name="service_id" value="4"/>
-        </insert>
+        </insert><!--
         <insert tableName="master_services">
             <column name="master_id" value="2"/>
             <column name="service_id" value="4"/>
-        </insert>
+        </insert>-->
     </changeSet>
 
     <changeSet id="25" author="s_samuliou">
@@ -333,10 +333,10 @@
         <insert tableName="salon_services">
             <column name="salon_id" value="1"/>
             <column name="service_id" value="4"/>
-        </insert>
+        </insert><!--
         <insert tableName="salon_services">
             <column name="salon_id" value="2"/>
             <column name="service_id" value="1"/>
-        </insert>
+        </insert>-->
     </changeSet>
 </databaseChangeLog>
