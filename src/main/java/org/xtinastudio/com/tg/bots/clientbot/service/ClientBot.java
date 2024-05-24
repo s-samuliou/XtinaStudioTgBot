@@ -228,9 +228,11 @@ public class ClientBot extends TelegramLongPollingBot {
                     appointment.setAppointmentTime(bookingState.getWorkTime());
                     appointment.setClient(clientService.findByChatId(chatId));
                     appointment.setStatus(AppointmentStatus.BANNED);
+
                     if (bookingState.getIndividualTime()) {
                         appointment.setDuration(bookingState.getDuration());
                     }
+
                     appointmentService.create(appointment);
                     bookingState = new BookingState();
                     editMessage = menu(chatId, messageId);
@@ -788,7 +790,7 @@ public class ClientBot extends TelegramLongPollingBot {
 
         int duration;
 
-        if (state.checkIndividualTime()) {
+        if (state.getDuration() != null) {
             duration = state.getDuration();
         } else {
             duration = state.getService().getDuration();
@@ -1040,6 +1042,7 @@ public class ClientBot extends TelegramLongPollingBot {
 
         if (!state.checkTime()) {
             int duration;
+
             if (state.getIndividualTime()) {
                 duration = state.getDuration();
             } else {
