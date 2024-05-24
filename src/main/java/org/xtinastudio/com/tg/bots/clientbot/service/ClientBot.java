@@ -291,7 +291,8 @@ public class ClientBot extends TelegramLongPollingBot {
                     editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "backToIndividualTime":
-                    bookingState.setIndividualTime(false);
+                    bookingState.setIndividualTime(null);
+                    bookingState.setDuration(null);
                     editMessage = bookService(chatId, bookingState, messageId);
                     return editMessage;
                 case "backToSelectIndividualTime":
@@ -805,7 +806,6 @@ public class ClientBot extends TelegramLongPollingBot {
                 .append(":mantelpiece_clock: ").append("Время: ").append(workTime.getDescription()).append("\n")
                 .append(":hourglass: ").append("Продолжительность: " + convertMinutesToHours(duration));
 
-
         sendMessage.setText(convertToEmoji(text.toString()));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -880,7 +880,6 @@ public class ClientBot extends TelegramLongPollingBot {
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
             for (Services service : allServices) {
-
                 text.append(":bell: ").append("Название: ").append(service.getName()).append("\n").append(":hourglass: ").append("Длительнсть: ").append(convertMinutesToHours(service.getDuration())).append("\n").append(":money_with_wings: ").append("Цена: ").append(service.getPrice()).append(" nis\n").append(":memo: ").append("Описание: ").append(service.getDescription()).append("\n\n");
                 InlineKeyboardButton button = new InlineKeyboardButton();
                 button.setText(convertToEmoji(":fleur_de_lis:" + service.getName()));
@@ -911,7 +910,7 @@ public class ClientBot extends TelegramLongPollingBot {
             text.append(":bookmark: Если Вы консультировались с мастером по поводу продолжительности процедуры и Вам нужно меньше/больше времени на процедуру, то Вам следует выбрать индивидуальное время.\n");
             text.append(":bookmark: Если Вы не консультировались с мастером, то выбирайте обыное время.\n\n");
 
-            text.append(":light_bulb: Нужна ли Вам индивидуальная длительность процедуры?\n\n");
+            text.append(":bulb: Нужна ли Вам индивидуальная длительность процедуры?\n\n");
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -933,7 +932,7 @@ public class ClientBot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> row3 = new ArrayList<>();
             InlineKeyboardButton button4 = new InlineKeyboardButton();
             button4.setText(convertToEmoji(":arrow_left: Назад "));
-            button4.setCallbackData("backToIndividualTime");
+            button4.setCallbackData("backToServices");
             row3.add(button4);
 
             InlineKeyboardButton button3 = new InlineKeyboardButton();
