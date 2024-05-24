@@ -906,11 +906,12 @@ public class ClientBot extends TelegramLongPollingBot {
         if (!state.checkIndividualTime()) {
             text.append("Вы выбрали:\n")
                     .append(":cherry_blossom: ").append("Вид услуги: ").append(state.getServiceKind()).append("\n")
-                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n");
+                    .append(":bell: ").append("Услуга: ").append(state.getService().getName()).append("\n\n");
 
-            text.append("Нужна ли Вам индивидуальная длительность процедуры?\n\n");
             text.append(":bookmark: Если Вы консультировались с мастером по поводу продолжительности процедуры и Вам нужно меньше/больше времени на процедуру, то Вам следует выбрать индивидуальное время.\n");
             text.append(":bookmark: Если Вы не консультировались с мастером, то выбирайте обыное время.\n\n");
+
+            text.append(":light_bulb: Нужна ли Вам индивидуальная длительность процедуры?\n\n");
 
             InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -930,8 +931,16 @@ public class ClientBot extends TelegramLongPollingBot {
             keyboard.add(row2);
 
             List<InlineKeyboardButton> row3 = new ArrayList<>();
-            row3.add(addBackBookStageButton(keyboard,"backToServices"));
-            row3.add(addMainMenuButton(keyboard));
+            InlineKeyboardButton button4 = new InlineKeyboardButton();
+            button4.setText(convertToEmoji(":arrow_left: Назад "));
+            button4.setCallbackData("backToIndividualTime");
+            row3.add(button4);
+
+            InlineKeyboardButton button3 = new InlineKeyboardButton();
+            button3.setText(convertToEmoji(":house_with_garden: Главное меню "));
+            button3.setCallbackData("menu");
+            row3.add(button3);
+
             keyboard.add(row3);
 
             markup.setKeyboard(keyboard);
