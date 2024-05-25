@@ -24,10 +24,12 @@ import org.xtinastudio.com.enums.WorkStatus;
 import org.xtinastudio.com.enums.WorkTime;
 import org.xtinastudio.com.service.*;
 import org.xtinastudio.com.tg.bots.clientbot.service.ClientNotice;
+import org.xtinastudio.com.tg.bots.clientbot.service.RatingState;
 import org.xtinastudio.com.tg.properties.MasterBotProperties;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -56,7 +58,12 @@ public class MasterBot extends TelegramLongPollingBot {
     private ClientService clientService;
 
     @Autowired
+    private ClientReviewsService clientReviewsService;
+
+    @Autowired
     private ServiceService serviceService;
+
+    RatingState ratingStateForClient = new RatingState();
 
     DeleteState deleteState = new DeleteState();
 
@@ -192,21 +199,37 @@ public class MasterBot extends TelegramLongPollingBot {
                     rateState.setAppointment(appointmentSelectedServiceRate);
                     editMessageText = menuSelectRate(chatId, messageId);
                     return editMessageText;
+                case "myServicesSelectRateForClientApprove":
+                    int myServicesSelectRateForClientData = Integer.parseInt(getDataCallbackQuery(data, 1));
+                    ratingStateForClient.setMasterRating(myServicesSelectRateForClientData);
+                    editMessageText = endService(chatId, messageId, ratingStateForClient.getAppointment());
+                    return editMessageText;
                 case "myServicesSelectRateEndService":
                     String selectedServiceRateEndService = getDataCallbackQuery(data, 1);
                     Appointment appointmentSelectedServiceRateEnd = appointmentService.getById(Long.parseLong(selectedServiceRateEndService));
-                    editMessageText = endService(chatId, messageId, appointmentSelectedServiceRateEnd);
+                    editMessageText = sendCheckRating(chatId, messageId, appointmentSelectedServiceRateEnd, "myServicesSelectRateForClientApprove_", "buttonNext", "buttonPrev");
                     return editMessageText;
                 case "myServicesSelectRateCancelService":
                     String selectedServiceRateCancelService = getDataCallbackQuery(data, 1);
                     Appointment appointmentSelectedServiceRateCancel = appointmentService.getById(Long.parseLong(selectedServiceRateCancelService));
-                    editMessageText = cancelService(chatId, messageId, appointmentSelectedServiceRateCancel);
+                    editMessageText = sendCheckRating(chatId, messageId, appointmentSelectedServiceRateCancel, "myServicesSelectRateForClientCancel_", "buttonNext", "buttonPrev");
+                    return editMessageText;
+                case "myServicesSelectRateForClientCancel":
+                    int myServicesSelectRateForClientCancelData = Integer.parseInt(getDataCallbackQuery(data, 1));
+                    ratingStateForClient.setMasterRating(myServicesSelectRateForClientCancelData);
+                    editMessageText = cancelService(chatId, messageId, ratingStateForClient.getAppointment());
                     return editMessageText;
                 case "myServicesSelectRateEndServiceApprove":
                     String appointmentId = getDataCallbackQuery(data, 1);
                     Appointment approve = appointmentService.getById(Long.parseLong(appointmentId));
                     approve.setStatus(AppointmentStatus.COMPLETED);
                     appointmentService.editById(approve.getId(), approve);
+                    ClientReview clientReview = new ClientReview();
+                    clientReview.setClient(ratingStateForClient.getAppointment().getClient());
+                    clientReview.setMaster(ratingStateForClient.getAppointment().getMaster());
+                    clientReview.setRating(ratingStateForClient.getMasterRating());
+                    clientReview.setReviewDate(LocalDateTime.now());
+                    clientReviewsService.create(clientReview);
                     clientNotice.sendCheckRatingToClient(approve);
                     editMessageText = menu(chatId, messageId);
                     return editMessageText;
@@ -215,6 +238,12 @@ public class MasterBot extends TelegramLongPollingBot {
                     Appointment cancel = appointmentService.getById(Long.parseLong(dataCallbackQuery));
                     cancel.setStatus(AppointmentStatus.CANCELED);
                     appointmentService.editById(cancel.getId(), cancel);
+                    ClientReview clientReview2 = new ClientReview();
+                    clientReview2.setClient(ratingStateForClient.getAppointment().getClient());
+                    clientReview2.setMaster(ratingStateForClient.getAppointment().getMaster());
+                    clientReview2.setRating(ratingStateForClient.getMasterRating());
+                    clientReview2.setReviewDate(LocalDateTime.now());
+                    clientReviewsService.create(clientReview2);
                     clientNotice.sendCancelMessageToClient(cancel);
                     editMessageText = menu(chatId, messageId);
                     return editMessageText;
@@ -315,6 +344,64 @@ public class MasterBot extends TelegramLongPollingBot {
         }
 
         return sendMessage;
+    }
+
+    public EditMessageText sendCheckRating(Long chatId, Long messageId, Appointment appointment, String buttonData, String buttonNext, String buttonPrev) {
+        EditMessageText editMessageText = new EditMessageText();
+        editMessageText.setChatId(chatId);
+        editMessageText.setMessageId(messageId.intValue());
+        StringBuilder text = new StringBuilder();
+
+        Master master = appointment.getMaster();
+        Services service = appointment.getService();
+        Client client = appointment.getClient();
+
+        ratingStateForClient.setAppointment(appointment);
+        ratingStateForClient.setMaster(master);
+
+        text.append("Поставьте оценку колиенту '").append(client.getName())
+                .append("' побывавшего у Вас на процедуре '").append(service.getName()).append("':\n");
+
+        text.append("\nВы можете не ставить оценку клиенту нажав далее меню.\n\n");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(convertToEmoji(String.valueOf(i) + " :star:"));
+            button.setCallbackData(buttonData + i);
+            if (i <= 3) {
+                row1.add(button);
+            } else {
+                row2.add(button);
+            }
+        }
+
+        keyboard.add(row1);
+        keyboard.add(row2);
+
+        List<InlineKeyboardButton> row3 = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(convertToEmoji(convertToEmoji(":arrow_left: Назад ")));
+        button.setCallbackData("next");
+
+        InlineKeyboardButton button2 = new InlineKeyboardButton();
+        button2.setText(convertToEmoji(convertToEmoji(":arrow_right: Далее ")));
+        button2.setCallbackData("next");
+
+
+        addMainMenuButton(keyboard);
+
+        markup.setKeyboard(keyboard);
+        editMessageText.setReplyMarkup(markup);
+
+        editMessageText.setChatId(client.getChatId());
+        editMessageText.setText(convertToEmoji(text.toString()));
+
+        return editMessageText;
     }
 
     private void deleteVacation(Master master, LocalDate startDate, LocalDate endDate) {
