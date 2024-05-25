@@ -39,6 +39,9 @@ public class Client {
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
     private List<MasterReview> masterReviews;
 
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
+    private List<ClientReview> clientReviews;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "salon_id")
     private Salon salon;

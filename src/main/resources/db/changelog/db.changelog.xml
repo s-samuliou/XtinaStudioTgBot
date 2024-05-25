@@ -18,7 +18,7 @@
             <column name="appointment_time" type="SMALLINT"/>
             <column name="status" type="VARCHAR(255)"/>
             <column name="work_status" type="VARCHAR(255)"/>
-            <column name="duration" type="BIGINT"/>
+            <column name="duration" type="INT"/>
             <column name="client_id" type="BIGINT"/>
             <column name="master_id" type="BIGINT"/>
             <column name="service_id" type="BIGINT"/>
@@ -45,6 +45,19 @@
         <createTable tableName="master_reviews">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_master_reviews"/>
+            </column>
+            <column name="master_id" type="BIGINT"/>
+            <column name="client_id" type="BIGINT"/>
+            <column name="rating" type="DOUBLE"/>
+            <column name="review_date" type="DATETIME"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="27" author="s_samuliou">
+        <comment>Create table client_reviews</comment>
+        <createTable tableName="client_reviews">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_client_reviews"/>
             </column>
             <column name="master_id" type="BIGINT"/>
             <column name="client_id" type="BIGINT"/>
@@ -176,6 +189,16 @@
                                  constraintName="fk_salser_on_services" referencedColumnNames="id"
                                  referencedTableName="services"/>
     </changeSet>
+    <changeSet id="28" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="client_id" baseTableName="client_reviews"
+                                 constraintName="FK_CLIENT_REVIEWS_ON_CLIENT" referencedColumnNames="id"
+                                 referencedTableName="clients"/>
+    </changeSet>
+    <changeSet id="29" author="s_samuliou">
+        <addForeignKeyConstraint baseColumnNames="master_id" baseTableName="client_reviews"
+                                 constraintName="FK_CLIENT_REVIEWS_ON_MASTER" referencedColumnNames="id"
+                                 referencedTableName="masters"/>
+    </changeSet>
 
     <changeSet id="20" author="s_samuliou">
         <insert tableName="salon">
@@ -302,6 +325,7 @@
             <column name="appointment_date" value="2024-04-22T12:00:00"/>
             <column name="appointment_time" value="1"/>
             <column name="status" value="BANNED"/>
+            <column name="duration" value="60"/>
             <column name="client_id" value="1"/>
             <column name="master_id" value="1"/>
             <column name="service_id" value="1"/>
@@ -317,7 +341,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="27" author="s_samuliou">
+    <changeSet id="30" author="s_samuliou">
         <insert tableName="salon_services">
             <column name="salon_id" value="1"/>
             <column name="service_id" value="1"/>
