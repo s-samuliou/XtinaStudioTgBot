@@ -8,10 +8,12 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
@@ -26,7 +28,13 @@ import org.xtinastudio.com.tg.bots.clientbot.service.RatingState;
 import org.xtinastudio.com.tg.bots.masterbot.service.states.MasterReportState;
 import org.xtinastudio.com.tg.properties.MasterBotProperties;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -160,6 +168,7 @@ public class MasterBot extends TelegramLongPollingBot {
             switch (prefix) {
                 case "menuSendMessage":
                     deleteMessageById(chatId.toString(), messageId.intValue());
+                    masterReportState = new MasterReportState();
                     holidayState = new HolidayState();
                     sendMessage = menu(chatId);
                     return sendMessage;
@@ -399,7 +408,7 @@ public class MasterBot extends TelegramLongPollingBot {
 
             markup.setKeyboard(keyboard);
             message.setReplyMarkup(markup);
-            message.setText(convertToEmoji(text.toString() + "\n\nTimestamp: " + System.currentTimeMillis()));
+            message.setText(convertToEmoji(text.toString()));
 
             return message;
         }
@@ -421,7 +430,7 @@ public class MasterBot extends TelegramLongPollingBot {
 
             markup.setKeyboard(keyboard);
             message.setReplyMarkup(markup);
-            message.setText(convertToEmoji(text.toString() + "\n\nTimestamp: " + System.currentTimeMillis()));
+            message.setText(convertToEmoji(text.toString()));
 
             return message;
         }
@@ -441,12 +450,13 @@ public class MasterBot extends TelegramLongPollingBot {
 
             markup.setKeyboard(keyboard);
             message.setReplyMarkup(markup);
-            message.setText(convertToEmoji(text.toString() + "\n\nTimestamp: " + System.currentTimeMillis()));
+            message.setText(convertToEmoji(text.toString()));
 
             return message;
         }
 
         if (!masterReportState.checkSendReport()) {
+            deleteMessageById(chatId.toString(), messageId.intValue());
             Master master = masterReportState.getMaster();
             ReportTimePeriod reportTimePeriod = masterReportState.getReportTimePeriod();
 
@@ -467,7 +477,6 @@ public class MasterBot extends TelegramLongPollingBot {
 
             int completedCount = 0;
             int canceledCount = 0;
-            int bannedCount = 0;
 
             for (Appointment appointment : appointments) {
                 if (appointment.getWorkStatus() == null) {
@@ -496,8 +505,6 @@ public class MasterBot extends TelegramLongPollingBot {
                         completedCount++;
                     } else if (appointment.getStatus() == AppointmentStatus.CANCELED) {
                         canceledCount++;
-                    } else if (appointment.getStatus() == AppointmentStatus.BANNED) {
-                        bannedCount++;
                     }
                 }
             }
@@ -510,18 +517,58 @@ public class MasterBot extends TelegramLongPollingBot {
                     .append("Отменено: ").append(canceledCount).append("\n")
                     .append("Всего услуг: ").append(completedCount + canceledCount).append("\n");
 
-            addMainMenuButton(keyboard);
-
             markup.setKeyboard(keyboard);
             message.setReplyMarkup(markup);
-            message.setText(convertToEmoji(text.toString() + "\n\nTimestamp: " + System.currentTimeMillis()));
+            message.setText(convertToEmoji(text.toString()));
 
-            return message;
+            // Создание временного файла для записи текста
+            Path tempFilePath = null;
+            try {
+                tempFilePath = Files.createTempFile(master.getName() + " " + masterReportState.getReportTimePeriod().getDescription(), ".txt");
+                Files.write(tempFilePath, text.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.WRITE);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (tempFilePath != null) {
+                List<InlineKeyboardButton> row = new ArrayList<>();
+                InlineKeyboardButton button = new InlineKeyboardButton();
+                button.setText(convertToEmoji(":house_with_garden: Главное меню :house_with_garden:"));
+                button.setCallbackData("menuSendMessage");
+                row.add(button);
+                keyboard.add(row);
+
+                markup.setKeyboard(keyboard);
+
+                SendDocument sendDocument = new SendDocument();
+                sendDocument.setChatId(chatId);
+                sendDocument.setReplyMarkup(markup);
+                sendDocument.setCaption("Отчёт по мастеру за " + masterReportState.getReportTimePeriod().getDescription());
+                try {
+                    sendDocument.setDocument(new InputFile(new ByteArrayInputStream(Files.readAllBytes(tempFilePath)), master.getName() + " " + masterReportState.getReportTimePeriod().getDescription() + ".txt"));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    execute(sendDocument);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
+                // Удаление временного файла
+                try {
+                    Files.deleteIfExists(tempFilePath);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return null;
         }
 
         markup.setKeyboard(keyboard);
         message.setReplyMarkup(markup);
-        message.setText(convertToEmoji(text.toString() + "\n\nTimestamp: " + System.currentTimeMillis()));
+        message.setText(convertToEmoji(text.toString()));
 
         return message;
     }
