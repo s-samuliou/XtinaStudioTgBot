@@ -11,6 +11,8 @@ public interface AppointmentService {
 
     Appointment create(Appointment appointment);
 
+    List<Appointment> getAppointmentsForLastDays(Master master, int days);
+
     Appointment editById(Long id, Appointment appointment);
 
     List<Appointment> getAppointmentsByDateAndMaster(LocalDate date, Master master);

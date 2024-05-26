@@ -50,6 +50,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    public List<Appointment> getAppointmentsForLastDays(Master master, int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days);
+        return repository.findByMasterAndAppointmentDateBetween(master, startDate, endDate);
+    }
+
+    @Override
     public List<Appointment> getAppointmentsByMaster(Master master) {
         return repository.getAppointmentsByMaster(master);
     }

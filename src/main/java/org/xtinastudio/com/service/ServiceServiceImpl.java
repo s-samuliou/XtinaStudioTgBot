@@ -1,6 +1,7 @@
 package org.xtinastudio.com.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.entity.Salon;
 import org.xtinastudio.com.entity.Services;
 import org.xtinastudio.com.repository.ServiceJpaRepository;

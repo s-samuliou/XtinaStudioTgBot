@@ -25,4 +25,6 @@ public interface AppointmentJpaRepository extends JpaRepository<Appointment, Lon
 
     @Query("SELECT a FROM Appointment a WHERE a.master = :master")
     List<Appointment> getAppointmentsByMaster(@Param("master") Master master);
+
+    List<Appointment> findByMasterAndAppointmentDateBetween(Master master, LocalDate appointmentDate, LocalDate appointmentDate2);
 }
