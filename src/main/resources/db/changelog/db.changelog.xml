@@ -229,23 +229,23 @@
 
     <changeSet id="22" author="s_samuliou">
         <insert tableName="services">
-            <column name="name" value="Lominirovanie"/>
-            <column name="kind" value="Brows"/>
-            <column name="description" value="Brows Description"/>
+            <column name="name" value="Ломинирование"/>
+            <column name="kind" value="Брови"/>
+            <column name="description" value="Ломинирую бровки"/>
             <column name="duration" value="60"/>
             <column name="price" value="250.00"/>
         </insert>
         <insert tableName="services">
-            <column name="name" value="Lite"/>
-            <column name="kind" value="Makeup"/>
-            <column name="description" value="Makeup Description"/>
+            <column name="name" value="Вечерний"/>
+            <column name="kind" value="Макияж"/>
+            <column name="description" value="Делаю макияжик"/>
             <column name="duration" value="90"/>
             <column name="price" value="290.00"/>
         </insert>
         <insert tableName="services">
-            <column name="name" value="Consultation"/>
-            <column name="kind" value="Consultation"/>
-            <column name="description" value="Consultation with master"/>
+            <column name="name" value="Консультация"/>
+            <column name="kind" value="Консультация"/>
+            <column name="description" value="Консультация с мастером"/>
             <column name="duration" value="15"/>
             <column name="price" value="0.00"/>
         </insert>

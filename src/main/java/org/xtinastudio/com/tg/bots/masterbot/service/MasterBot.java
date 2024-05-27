@@ -31,6 +31,7 @@ import org.xtinastudio.com.tg.properties.MasterBotProperties;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -399,7 +400,7 @@ public class MasterBot extends TelegramLongPollingBot {
             for (Salon salon : salons) {
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(convertToEmoji("::" + salon.getAddress()));
+                button.setText(convertToEmoji(":office: " + salon.getAddress()));
                 button.setCallbackData("masterReportsSelectMaster_" + salon.getId());
                 row.add(button);
                 keyboard.add(row);
@@ -421,7 +422,7 @@ public class MasterBot extends TelegramLongPollingBot {
             for (Master master : masters) {
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(convertToEmoji("::" + master.getName()));
+                button.setText(convertToEmoji(":star: " + master.getName()));
                 button.setCallbackData("masterReportsSelectTimePeriod_" + master.getId());
                 row.add(button);
                 keyboard.add(row);
@@ -441,7 +442,7 @@ public class MasterBot extends TelegramLongPollingBot {
             for (ReportTimePeriod period : ReportTimePeriod.values()) {
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 InlineKeyboardButton button = new InlineKeyboardButton();
-                button.setText(convertToEmoji("::" + period.getDescription()));
+                button.setText(convertToEmoji(":scroll: " + period.getDescription()));
                 button.setCallbackData("masterReportSendReport_" + period.name());
                 row.add(button);
                 keyboard.add(row);
@@ -481,6 +482,7 @@ public class MasterBot extends TelegramLongPollingBot {
             for (Appointment appointment : appointments) {
                 if (appointment.getWorkStatus() == null) {
                     int duration;
+
                     if (appointment.getDuration() != null) {
                         duration = appointment.getDuration();
                     } else {
@@ -490,16 +492,19 @@ public class MasterBot extends TelegramLongPollingBot {
                     text.append("Дата: ").append(appointment.getAppointmentDate()).append("\n")
                             .append("Клиент: ").append(appointment.getClient().getName()).append("\n")
                             .append("Услуга: ").append(appointment.getService().getName()).append("\n")
+                            .append("Статус: ").append(appointment.getStatus()).append("\n")
                             .append("Длительность: ").append(duration).append(" минут").append("\n")
                             .append("Цена: ").append(appointment.getService().getPrice()).append(" руб").append("\n\n");
 
-                    totalAppointments++;
-                    if (appointment.getDuration() != null) {
-                        totalDuration += appointment.getDuration();
-                    } else {
-                        totalDuration += appointment.getService().getDuration();
+                    if (appointment.getStatus().equals(AppointmentStatus.COMPLETED)) {
+                        totalPrice = totalPrice.add(appointment.getService().getPrice());
+
+                        if (appointment.getDuration() != null) {
+                            totalDuration += appointment.getDuration();
+                        } else {
+                            totalDuration += appointment.getService().getDuration();
+                        }
                     }
-                    totalPrice = totalPrice.add(appointment.getService().getPrice());
 
                     if (appointment.getStatus() == AppointmentStatus.COMPLETED) {
                         completedCount++;
@@ -509,19 +514,19 @@ public class MasterBot extends TelegramLongPollingBot {
                 }
             }
 
+            totalAppointments = completedCount + canceledCount;
+
             text.append("Итоги:\n")
                     .append("Всего записей: ").append(totalAppointments).append("\n")
                     .append("Общая длительность: ").append(totalDuration).append(" минут").append("\n")
                     .append("Общая стоимость: ").append(totalPrice).append(" руб").append("\n")
                     .append("Завершено: ").append(completedCount).append("\n")
-                    .append("Отменено: ").append(canceledCount).append("\n")
-                    .append("Всего услуг: ").append(completedCount + canceledCount).append("\n");
+                    .append("Отменено: ").append(canceledCount).append("\n");
 
             markup.setKeyboard(keyboard);
             message.setReplyMarkup(markup);
             message.setText(convertToEmoji(text.toString()));
 
-            // Создание временного файла для записи текста
             Path tempFilePath = null;
             try {
                 tempFilePath = Files.createTempFile(master.getName() + " " + masterReportState.getReportTimePeriod().getDescription(), ".txt");
@@ -555,7 +560,6 @@ public class MasterBot extends TelegramLongPollingBot {
                     e.printStackTrace();
                 }
 
-                // Удаление временного файла
                 try {
                     Files.deleteIfExists(tempFilePath);
                 } catch (IOException e) {
@@ -587,7 +591,7 @@ public class MasterBot extends TelegramLongPollingBot {
         ratingStateForClient.setAppointment(appointment);
         ratingStateForClient.setMaster(master);
 
-        text.append("Поставьте оценку колиенту '").append(client.getName())
+        text.append(":bulb: Поставьте оценку колиенту '").append(client.getName())
                 .append("' побывавшего у Вас на процедуре '").append(service.getName()).append("':\n");
 
         text.append("\nВы можете не ставить оценку клиенту нажав далее меню.\n\n");
@@ -670,14 +674,14 @@ public class MasterBot extends TelegramLongPollingBot {
 
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Подтверждаю");
+        button.setText(":white_check_mark: Подтверждаю");
         button.setCallbackData("myWorkTimeDeleteApproveAction_");
         row.add(button);
         keyboard.add(row);
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText("Назад");
+        button2.setText(":arrow_left: Назад");
         button2.setCallbackData("myWorkTimeDelete_");
         row1.add(button2);
         keyboard.add(row1);
@@ -745,7 +749,7 @@ public class MasterBot extends TelegramLongPollingBot {
                 : startDate.toString() + " - " + endDate.toString();
 
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText(dateRangeText + " (" + status.getDescription() + ")");
+        button.setText(convertToEmoji(":calendar: " + dateRangeText + " (" + status.getDescription() + ")"));
         button.setCallbackData("myWorkTimeDeleteApprove_" + startDate + "_" + endDate + "_" + status);
 
         List<InlineKeyboardButton> row = new ArrayList<>();
@@ -767,14 +771,14 @@ public class MasterBot extends TelegramLongPollingBot {
 
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Добавить выходной");
+        button.setText(convertToEmoji(":white_check_mark: Добавить выходной"));
         button.setCallbackData("myWorkTimeCreate_");
         row.add(button);
         keyboard.add(row);
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton();
-        button1.setText("Удалить выходной");
+        button1.setText(convertToEmoji(":x: Удалить выходной"));
         button1.setCallbackData("myWorkTimeDelete_");
         row1.add(button1);
         keyboard.add(row1);
@@ -804,7 +808,13 @@ public class MasterBot extends TelegramLongPollingBot {
                 if (status != WorkStatus.WORKING) {
                     List<InlineKeyboardButton> row = new ArrayList<>();
                     InlineKeyboardButton button = new InlineKeyboardButton();
-                    button.setText(status.getDescription());
+                    if (status.equals(WorkStatus.SICK)) {
+                        button.setText(convertToEmoji(":hospital: " + status.getDescription()));
+                    } else if (status.equals(WorkStatus.DAYOFF)) {
+                        button.setText(convertToEmoji(":palm_tree: " + status.getDescription()));
+                    } else if (status.equals(WorkStatus.VACATION)) {
+                        button.setText(convertToEmoji(":airplane: " + status.getDescription()));
+                    }
                     button.setCallbackData("myWorkTimeStatus_" + status.name());
                     row.add(button);
                     keyboard.add(row);
@@ -839,9 +849,9 @@ public class MasterBot extends TelegramLongPollingBot {
 
         if (!holidayState.checkApprove()) {
             text.append("Подтвердите Ваш выбор:").append("\n")
-                    .append("Статус: ").append(holidayState.workStatus.getDescription()).append("\n")
-                    .append("Дата начала: ").append(holidayState.startDate).append("\n")
-                    .append("Дата конца: ").append(holidayState.endDate).append("\n\n");
+                    .append(":bell: Статус: ").append(holidayState.workStatus.getDescription()).append("\n")
+                    .append(":calendar: Дата начала: ").append(holidayState.startDate).append("\n")
+                    .append(":calendar: Дата конца: ").append(holidayState.endDate).append("\n\n");
 
 
             List<InlineKeyboardButton> row = new ArrayList<>();
@@ -994,21 +1004,21 @@ public class MasterBot extends TelegramLongPollingBot {
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton();
-        button1.setText(convertToEmoji("На сегодня"));
+        button1.setText(convertToEmoji(":arrow_down: На сегодня"));
         button1.setCallbackData("myServicesToday");
         row1.add(button1);
         keyboard.add(row1);
 
         List<InlineKeyboardButton> row2 = new ArrayList<>();
         InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText(convertToEmoji("На завтра"));
+        button2.setText(convertToEmoji(":arrow_heading_down: На завтра"));
         button2.setCallbackData("myServicesTomorrow");
         row2.add(button2);
         keyboard.add(row2);
 
         List<InlineKeyboardButton> row4 = new ArrayList<>();
         InlineKeyboardButton button4 = new InlineKeyboardButton();
-        button4.setText(convertToEmoji("Выбрать дату"));
+        button4.setText(convertToEmoji(":calendar: Выбрать дату"));
         button4.setCallbackData("myServicesSelectDate");
         row4.add(button4);
         keyboard.add(row4);
@@ -1099,8 +1109,13 @@ public class MasterBot extends TelegramLongPollingBot {
                     duration = appointment.getService().getDuration();
                 }
 
+                /*if () {
+                    roundToTwoDecimalPlaces(clientReviewsService.getClientRating(appointment.getClient()))
+                }*/
+
                 text.append(":hash: ").append("Номер ").append(counter+1).append(":\n")
-                        .append(":elf:").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
+                        .append(":elf: ").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
+                      //  .append(":star: ").append("Рейтинг: ").append().append("\n")
                         .append(":telephone: ").append("Номер клиента: ").append(appointment.getClient().getPhoneNumber()).append("\n")
                         .append(":cherry_blossom: ").append("Вид услуги:: ").append(appointment.getService().getKind()).append("\n")
                         .append(":bell: ").append("Услуга: ").append(appointment.getService().getName()).append("\n")
@@ -1211,7 +1226,7 @@ public class MasterBot extends TelegramLongPollingBot {
         if (masterService.findByChatId(chatId).getRole() != Role.MASTER) {
             List<InlineKeyboardButton> row6 = new ArrayList<>();
             InlineKeyboardButton button6 = new InlineKeyboardButton();
-            button6.setText(convertToEmoji(":book: Посмотреть отчёты"));
+            button6.setText(convertToEmoji(":scroll: Посмотреть отчёты"));
             button6.setCallbackData("masterReportsSelectSalon");
             row6.add(button6);
             keyboard.add(row6);
@@ -1264,7 +1279,7 @@ public class MasterBot extends TelegramLongPollingBot {
         if (masterService.findByChatId(chatId).getRole() != Role.MASTER) {
             List<InlineKeyboardButton> row6 = new ArrayList<>();
             InlineKeyboardButton button6 = new InlineKeyboardButton();
-            button6.setText(convertToEmoji(":book: Посмотреть отчёты"));
+            button6.setText(convertToEmoji(":scroll: Посмотреть отчёты"));
             button6.setCallbackData("masterReportsSelectSalon");
             row6.add(button6);
             keyboard.add(row6);
@@ -1287,16 +1302,15 @@ public class MasterBot extends TelegramLongPollingBot {
         EditMessageText message = new EditMessageText();
         message.setChatId(chatId);
         message.setMessageId(messageId.intValue());
-
         StringBuilder text = new StringBuilder();
 
         Master master = masterService.findByChatId(chatId);
 
         text.append("Ваш профиль:\n\n")
-                .append("::").append("Имя: ").append(master.getName()).append("\n")
-                .append("::").append("Салон: ").append(master.getSalon().getAddress()).append("\n")
-                .append("::").append("Рейтинг: ").append(masterReviewService.getMasterRating(master)).append("\n")
-                .append("::").append("Ваш url: ").append(master.getUrl()).append("\n");
+                .append(":elf:").append("Имя: ").append(master.getName()).append("\n")
+                .append(":office:").append("Салон: ").append(master.getSalon().getAddress()).append("\n")
+                .append(":star:").append("Рейтинг: ").append(masterReviewService.getMasterRating(master)).append("\n")
+                .append(":link:").append("Ваш url: ").append(master.getUrl()).append("\n");
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
@@ -1570,6 +1584,12 @@ public class MasterBot extends TelegramLongPollingBot {
         } else {
             return remainingMinutes + "мин";
         }
+    }
+
+    public static double roundToTwoDecimalPlaces(double value) {
+        BigDecimal bigDecimal = BigDecimal.valueOf(value);
+        bigDecimal = bigDecimal.setScale(2, RoundingMode.HALF_UP);
+        return bigDecimal.doubleValue();
     }
 
     public void deleteMessageById(String chatId, int messageId) {
