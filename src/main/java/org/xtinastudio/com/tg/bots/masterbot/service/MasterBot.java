@@ -1109,14 +1109,17 @@ public class MasterBot extends TelegramLongPollingBot {
                     duration = appointment.getService().getDuration();
                 }
 
-                /*if () {
-                    roundToTwoDecimalPlaces(clientReviewsService.getClientRating(appointment.getClient()))
-                }*/
-
                 text.append(":hash: ").append("Номер ").append(counter+1).append(":\n")
-                        .append(":elf: ").append("Клиент: ").append(appointment.getClient().getName()).append("\n")
-                      //  .append(":star: ").append("Рейтинг: ").append().append("\n")
-                        .append(":telephone: ").append("Номер клиента: ").append(appointment.getClient().getPhoneNumber()).append("\n")
+                        .append(":elf: ").append("Клиент: ").append(appointment.getClient().getName()).append("\n");
+
+                Double clientRating = clientReviewsService.getClientRating(appointment.getClient());
+                if (clientRating != null) {
+                    text.append(":star: ").append("Рейтинг: ").append(roundToTwoDecimalPlaces(clientRating)).append("\n");
+                } else {
+                    text.append(":star: ").append("Рейтинг: ").append("рейтинг отсутствует").append("\n");
+                }
+
+                text.append(":telephone: ").append("Номер клиента: ").append(appointment.getClient().getPhoneNumber()).append("\n")
                         .append(":cherry_blossom: ").append("Вид услуги:: ").append(appointment.getService().getKind()).append("\n")
                         .append(":bell: ").append("Услуга: ").append(appointment.getService().getName()).append("\n")
                         .append(":calendar: ").append("Дата: ").append(appointment.getAppointmentDate()).append("\n")

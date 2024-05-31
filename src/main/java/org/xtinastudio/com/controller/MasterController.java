@@ -14,7 +14,7 @@ import org.xtinastudio.com.exceptions.MasterNotFoundException;
 import org.xtinastudio.com.service.MasterService;
 
 @Slf4j
-@Tag(name="Product Controller", description="Handles operations related to products")
+@Tag(name="Master Controller", description="Handles operations related to masters")
 @RestController
 @RequestMapping("/v1/masters")
 public class MasterController {
@@ -23,24 +23,23 @@ public class MasterController {
     MasterService masterService;
 
     @Operation(
-            summary = "Create a new product",
-            description = "Creates a new product based on the provided data",
+            summary = "Create a new master",
+            description = "Creates a new master based on the provided data",
             responses = {
-                    @ApiResponse(responseCode = "201", description = "Successfully created product"),
+                    @ApiResponse(responseCode = "201", description = "Successfully created master"),
                     @ApiResponse(responseCode = "400", description = "Bad request"),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             }
     )
     @PostMapping()
     public ResponseEntity<Master> create(@RequestBody Master master) {
-        log.info("Received request to create product: {}", master);
+        log.info("Received request to create master: {}", master);
         Master createMaster = masterService.create(master);
-        log.debug("Product created: {}", createMaster);
+        log.debug("Master created: {}", createMaster);
         return ResponseEntity.status(HttpStatus.CREATED).body(createMaster);
     }
 
-
-
+    
 
     @ExceptionHandler({MasterInvalidArgumentException.class, MasterNotFoundException.class})
     public ResponseEntity<String> handleProductException(Exception exception) {

@@ -37,7 +37,7 @@
         </dependency>
 
         <!--Для работы с Security-->
-        <!--<dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
@@ -54,7 +54,7 @@
             <version>6.2.0</version>
         </dependency>
 
-        &lt;!&ndash;Для работы с JWT&ndash;&gt;
+        <!--&lt;!&ndash;Для работы с JWT&ndash;&gt;
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
