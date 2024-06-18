@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.xtinastudio.com.converter.MasterMapper;
+import org.xtinastudio.com.dto.MasterCreateDto;
 import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.exceptions.MasterInvalidArgumentException;
 import org.xtinastudio.com.exceptions.MasterNotFoundException;
@@ -22,6 +24,9 @@ public class MasterController {
     @Autowired
     MasterService masterService;
 
+    @Autowired
+    private MasterMapper mapper;
+
     @Operation(
             summary = "Create a new master",
             description = "Creates a new master based on the provided data",
@@ -32,14 +37,14 @@ public class MasterController {
             }
     )
     @PostMapping()
-    public ResponseEntity<Master> create(@RequestBody Master master) {
-        log.info("Received request to create master: {}", master);
-        Master createMaster = masterService.create(master);
-        log.debug("Master created: {}", createMaster);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createMaster);
+    public ResponseEntity<MasterCreateDto> create(@RequestBody MasterCreateDto masterCreateDto) {
+        log.info("Received request to create master: {}", masterCreateDto);
+        Master master = mapper.masterCreateDtoToMaster(masterCreateDto);
+        Master createdMaster = masterService.create(master);
+        MasterCreateDto createdMasterDto = mapper.masterToMasterCreateDto(createdMaster);
+        log.debug("Master created: {}", createdMasterDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(masterCreateDto);
     }
-
-    
 
     @ExceptionHandler({MasterInvalidArgumentException.class, MasterNotFoundException.class})
     public ResponseEntity<String> handleProductException(Exception exception) {
