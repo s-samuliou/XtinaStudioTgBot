@@ -263,7 +263,7 @@
             <column name="chat_id" value="NULL"/>
             <column name="name" value="Степан Самулёв"/>
             <column name="login" value="master"/>
-            <column name="password" value="master"/>
+            <column name="password" value="$2a$10$AMEbVue6RVTbMm6E3VNx.OdmVB1uQ6bQc82vSsbDFzx.PMThyPGJa"/>
             <column name="url" value="https://www.instagram.com/xtina.studio/"/>
             <column name="description" value="Мастер с опытом работы 5 лет"/>
             <column name="photo_url" value="none"/>
@@ -275,7 +275,7 @@
             <column name="chat_id" value="NULL"/>
             <column name="name" value="Мостовой Артём"/>
             <column name="login" value="mostovoi"/>
-            <column name="password" value="artem1234"/>
+            <column name="password" value="$2a$10$AMEbVue6RVTbMm6E3VNx.OdmVB1uQ6bQc82vSsbDFzx.PMThyPGJa"/>
             <column name="url" value="https://www.instagram.com/xtina.studio/"/>
             <column name="description" value="Работает на протяжении 4 лет, мастер, которого любят все клиенты"/>
             <column name="photo_url" value="https://example.com/master_photo.jpg"/>

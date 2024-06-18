@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class MasterCreateDto {
 
-    @Schema(description = "The unique identifier of the master", example = "1")
+    @Schema(description = "The unique identifier of the master", example = "3")
     private Long id;
 
     @Schema(description = "The identifier of the master's chat", example = "1")
@@ -37,18 +37,16 @@ public class MasterCreateDto {
     @Schema(description = "The master's url", example = "//inst")
     private String url;
 
-    @Schema(description = "The master's description", example = "Description")
+    @Schema(description = "The master's description", example = "Super Master")
     private String description;
 
+    @Schema(description = "The master's role", example = "MASTER")
     private Role role;
 
+    @Schema(description = "The master's work status", example = "WORKING")
     private WorkStatus workStatus;
 
-    private List<Appointment> appointments;
+    private Integer serviceId;
 
-    private List<Services> services;
-
-    private List<MasterReview> masterReviews;
-
-    private Salon salon;
+    private Integer salonId;
 }

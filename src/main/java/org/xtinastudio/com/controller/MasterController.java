@@ -13,6 +13,9 @@ import org.xtinastudio.com.dto.MasterCreateDto;
 import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.exceptions.MasterInvalidArgumentException;
 import org.xtinastudio.com.exceptions.MasterNotFoundException;
+import org.xtinastudio.com.security.AuthenticationService;
+import org.xtinastudio.com.security.model.JwtAuthenticationResponse;
+import org.xtinastudio.com.security.model.SignInRequest;
 import org.xtinastudio.com.service.MasterService;
 
 @Slf4j
@@ -23,6 +26,9 @@ public class MasterController {
 
     @Autowired
     MasterService masterService;
+
+    @Autowired
+    private AuthenticationService authenticationService;
 
     @Autowired
     private MasterMapper mapper;
@@ -44,6 +50,12 @@ public class MasterController {
         MasterCreateDto createdMasterDto = mapper.masterToMasterCreateDto(createdMaster);
         log.debug("Master created: {}", createdMasterDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(masterCreateDto);
+    }
+
+    @PostMapping("/login")
+    @ResponseBody
+    public JwtAuthenticationResponse login(@RequestBody SignInRequest request) {
+        return authenticationService.authenticate(request);
     }
 
     @ExceptionHandler({MasterInvalidArgumentException.class, MasterNotFoundException.class})

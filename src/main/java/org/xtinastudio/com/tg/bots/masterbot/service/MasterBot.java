@@ -4,6 +4,7 @@ import com.mysql.cj.protocol.a.LocalDateValueEncoder;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -71,6 +72,9 @@ public class MasterBot extends TelegramLongPollingBot {
 
     @Autowired
     private ServiceService serviceService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     RatingState ratingStateForClient = new RatingState();
 

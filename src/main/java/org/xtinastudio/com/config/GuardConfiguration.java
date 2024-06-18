@@ -56,10 +56,10 @@ public class GuardConfiguration {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(SWAGGER).permitAll()
                         .requestMatchers("/v1/masters/login").permitAll()
-                        .requestMatchers("/v1/masters/register").permitAll()
+                        .requestMatchers("/v1/masters/**").hasAnyRole("ADMIN", "MASTER_ADMIN")
                         .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }

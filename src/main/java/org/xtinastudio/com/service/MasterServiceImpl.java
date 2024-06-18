@@ -1,6 +1,7 @@
 package org.xtinastudio.com.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.xtinastudio.com.entity.Master;
 import org.xtinastudio.com.entity.Salon;
@@ -16,8 +17,12 @@ public class MasterServiceImpl implements MasterService {
     @Autowired
     MasterJpaRepository repository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public Master create(Master master) {
+        master.setPassword(passwordEncoder.encode(master.getPassword()));
         return repository.save(master);
     }
 
@@ -32,7 +37,7 @@ public class MasterServiceImpl implements MasterService {
         existingMaster.setRole(master.getRole());
         existingMaster.setWorkStatus(master.getWorkStatus());
         existingMaster.setLogin(master.getLogin());
-        existingMaster.setPassword(master.getPassword());
+        existingMaster.setPassword(passwordEncoder.encode(master.getPassword()));
 
         Master updatedMaster = repository.save(existingMaster);
 
