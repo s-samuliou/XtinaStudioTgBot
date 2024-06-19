@@ -678,14 +678,14 @@ public class MasterBot extends TelegramLongPollingBot {
 
         List<InlineKeyboardButton> row = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText(":white_check_mark: Подтверждаю");
+        button.setText(convertToEmoji(":white_check_mark: Подтверждаю"));
         button.setCallbackData("myWorkTimeDeleteApproveAction_");
         row.add(button);
         keyboard.add(row);
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
         InlineKeyboardButton button2 = new InlineKeyboardButton();
-        button2.setText(":arrow_left: Назад");
+        button2.setText(convertToEmoji(":arrow_left: Назад"));
         button2.setCallbackData("myWorkTimeDelete_");
         row1.add(button2);
         keyboard.add(row1);

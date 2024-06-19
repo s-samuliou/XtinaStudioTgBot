@@ -52,6 +52,63 @@ public class MasterController {
         return ResponseEntity.status(HttpStatus.CREATED).body(masterCreateDto);
     }
 
+    @Operation(
+            summary = "Get all masters",
+            description = "Gets all masters",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Successfully created master"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    @GetMapping()
+    public ResponseEntity<MasterCreateDto> getAllMasters(@RequestBody MasterCreateDto masterCreateDto) {
+        log.info("Received request to create master: {}", masterCreateDto);
+        Master master = mapper.masterCreateDtoToMaster(masterCreateDto);
+        Master createdMaster = masterService.create(master);
+        MasterCreateDto createdMasterDto = mapper.masterToMasterCreateDto(createdMaster);
+        log.debug("Master created: {}", createdMasterDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(masterCreateDto);
+    }
+
+    @Operation(
+            summary = "Update master",
+            description = "Update a master",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Successfully created master"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    @PutMapping()
+    public ResponseEntity<MasterCreateDto> update(@RequestBody MasterCreateDto masterCreateDto) {
+        log.info("Received request to create master: {}", masterCreateDto);
+        Master master = mapper.masterCreateDtoToMaster(masterCreateDto);
+        Master createdMaster = masterService.create(master);
+        MasterCreateDto createdMasterDto = mapper.masterToMasterCreateDto(createdMaster);
+        log.debug("Master created: {}", createdMasterDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(masterCreateDto);
+    }
+
+    @Operation(
+            summary = "Delete a new master",
+            description = "Delete a master",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Successfully created master"),
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    @DeleteMapping()
+    public ResponseEntity<MasterCreateDto> delete(@RequestBody MasterCreateDto masterCreateDto) {
+        log.info("Received request to create master: {}", masterCreateDto);
+        Master master = mapper.masterCreateDtoToMaster(masterCreateDto);
+        Master createdMaster = masterService.create(master);
+        MasterCreateDto createdMasterDto = mapper.masterToMasterCreateDto(createdMaster);
+        log.debug("Master created: {}", createdMasterDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(masterCreateDto);
+    }
+
     @PostMapping("/login")
     @ResponseBody
     public JwtAuthenticationResponse login(@RequestBody SignInRequest request) {
